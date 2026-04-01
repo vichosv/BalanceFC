@@ -409,6 +409,26 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 .chem-bar-bg{height:6px;background:var(--border2);border-radius:3px;overflow:hidden;}
 .chem-bar-fill{height:100%;border-radius:3px;transition:width .6s ease;}
 .chem-score{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;min-width:32px;text-align:right;}
+
+/* ── PLAYER HISTORY MODAL ── */
+.ph-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;text-align:left;}
+.ph-av{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;flex-shrink:0;}
+.ph-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;line-height:1;}
+.ph-pos{font-size:12px;color:var(--muted);margin-top:3px;}
+.ph-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.ph-stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;}
+.ph-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;line-height:1;}
+.ph-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:3px;}
+.ph-match{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);margin-bottom:6px;}
+.ph-match-res{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;flex-shrink:0;}
+.ph-match-info{flex:1;min-width:0;}
+.ph-match-date{font-size:11px;color:var(--muted);}
+.ph-match-detail{font-size:12px;font-weight:600;margin-top:1px;}
+.ph-match-score{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;flex-shrink:0;}
+.res-w{background:rgba(0,230,118,.2);color:var(--green);}
+.res-l{background:rgba(255,82,82,.2);color:var(--red);}
+.res-d{background:rgba(255,215,64,.2);color:var(--yellow);}
+.ph-rank-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:12px;}
 @keyframes snIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 </style>
 </head>
@@ -667,6 +687,36 @@ function winRate(p){
   if(!p.history || !p.history.matches) return 0;
   return Math.round((p.history.wins / p.history.matches) * 100);
 }
+
+// Dynamic ranking score based on position
+function rankScore(p){
+  if(!p.history || !p.history.matches) return 0;
+  const wr = winRate(p);                          // 0-100, base for everyone
+  const goals = p.history.goals||0;
+  const gd = p.history.goalDiff||0;
+  const pos = p.position;
+  // FWD & WNG: 60% winrate + 40% goals (normalized per match)
+  if(pos==='FWD'||pos==='WNG'){
+    const goalsPerMatch = goals / p.history.matches;
+    return wr*0.6 + Math.min(goalsPerMatch*20, 40); // cap at 40pts
+  }
+  // GK & DEF: 60% winrate + 40% goal difference (normalized)
+  if(pos==='GK'||pos==='DEF'){
+    const gdPerMatch = gd / p.history.matches;
+    return wr*0.6 + Math.min(Math.max(gdPerMatch*10+20, 0), 40);
+  }
+  // MID: 70% winrate + 15% goals + 15% gd
+  const goalsPerMatch = goals / p.history.matches;
+  const gdPerMatch = gd / p.history.matches;
+  return wr*0.7 + Math.min(goalsPerMatch*10, 15) + Math.min(Math.max(gdPerMatch*5+7.5, 0), 15);
+}
+
+function rankCriteria(p){
+  const pos=p.position;
+  if(pos==='FWD'||pos==='WNG') return `⚽ ${p.history.goals||0} goles`;
+  if(pos==='GK'||pos==='DEF'){const gd=p.history.goalDiff||0; return `${gd>=0?'+':''}${gd} dif. goles`;}
+  return `${winRate(p)}% WR`;
+}
 function fmtDate(ts){
   const d=new Date(ts);
   return d.toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
@@ -772,6 +822,8 @@ function renderList(){
     const statsHTML=SK.map(s=>`<div class="fc-stat"><div class="fc-snum">${p[s.key]}</div><div class="fc-slbl">${s.label.slice(0,3).toUpperCase()}</div></div>`).join('');
     const card=document.createElement('div');
     card.className=`fc ${t}`;
+    card.style.cursor='pointer';
+    card.onclick=()=>openPlayerHistory(p.id);
     card.innerHTML=`
       <div class="fc-bg"></div><div class="fc-shine"></div>
       <div class="fc-in">
@@ -1101,7 +1153,7 @@ function saveMatch(){
 
 function recalcAllStats(){
   db.players.forEach(p=>{
-    p.history={matches:0,wins:0,losses:0,draws:0,mvps:0};
+    p.history={matches:0,wins:0,losses:0,draws:0,mvps:0,goals:0,goalDiff:0};
   });
 
   db.matches.forEach(m=>{
@@ -1119,6 +1171,9 @@ function recalcAllStats(){
 
         if(m.mvp===p.id) p.history.mvps++;
         if(m.goles && m.goles[p.id]) p.history.goals=(p.history.goals||0)+m.goles[p.id];
+        // goal difference: goals scored by team minus goals conceded
+        if(idsA.has(p.id)){ p.history.goalDiff=(p.history.goalDiff||0)+(m.scoreA-m.scoreB); }
+        else if(idsB.has(p.id)){ p.history.goalDiff=(p.history.goalDiff||0)+(m.scoreB-m.scoreA); }
       }
     });
   });
@@ -1210,7 +1265,7 @@ function renderHistory(){
 
   const ranking=[...db.players]
     .filter(p=>p.history.matches>0)
-    .sort((a,b)=> winRate(b)-winRate(a) || b.history.wins-a.history.wins || b.history.mvps-a.history.mvps);
+    .sort((a,b)=> rankScore(b)-rankScore(a) || b.history.wins-a.history.wins || b.history.mvps-a.history.mvps);
 
   const mostMatches=[...db.players].sort((a,b)=>b.history.matches-a.history.matches)[0];
   const mostWins=[...db.players].sort((a,b)=>b.history.wins-a.history.wins)[0];
@@ -1227,12 +1282,12 @@ function renderHistory(){
             <div class="rank-pos">${i+1}</div>
             <div>
               <div class="rank-name">${p.name} ${playerForm(p.id)}</div>
-              <div class="rank-sub">${posObj(p.position).emoji} ${posObj(p.position).name} · ${p.history.matches} PJ · ${p.history.wins} V · ⚽${p.history.goals||0} · ${p.history.mvps} MVP</div>
+              <div class="rank-sub">${posObj(p.position).emoji} ${posObj(p.position).name} · ${p.history.matches} PJ · ${p.history.wins} V · ${winRate(p)}% WR · ⚽${p.history.goals||0}</div>
             </div>
           </div>
           <div class="rank-right">
-            <div class="rank-main">${winRate(p)}%</div>
-            <div class="rank-mini">winrate</div>
+            <div class="rank-main" style="color:var(--accent)">${Math.round(rankScore(p))}</div>
+            <div class="rank-mini">${rankCriteria(p)}</div>
           </div>
         </div>
       `).join('') : `<div class="empty-text">Aún no hay suficientes datos para ranking.</div>`}
@@ -1520,6 +1575,68 @@ function renderChemistry(){
       <div class="chem-score" style="color:${col}">${cs.rate}%</div>
     </div>`;
   }).join('');
+}
+
+
+function openPlayerHistory(id){
+  const p=db.players.find(pl=>pl.id===id); if(!p) return;
+  const col=gc(p.id), in_=ini(p.name), pos=posObj(p.position), o=ov(p);
+  const pMatches=db.matches.filter(m=>m.teamA.some(x=>x.id===id)||m.teamB.some(x=>x.id===id));
+  const gd=p.history.goalDiff||0;
+  const statsGrid=`
+    <div class="ph-stats-grid">
+      <div class="ph-stat"><div class="ph-stat-val" style="color:var(--accent)">${o}</div><div class="ph-stat-lbl">Overall</div></div>
+      <div class="ph-stat"><div class="ph-stat-val" style="color:var(--green)">${p.history.wins}</div><div class="ph-stat-lbl">Victorias</div></div>
+      <div class="ph-stat"><div class="ph-stat-val" style="color:var(--muted)">${p.history.matches}</div><div class="ph-stat-lbl">PJ</div></div>
+      <div class="ph-stat"><div class="ph-stat-val" style="color:var(--yellow)">${winRate(p)}%</div><div class="ph-stat-lbl">Winrate</div></div>
+      <div class="ph-stat"><div class="ph-stat-val" style="color:var(--yellow)">${p.history.goals||0}</div><div class="ph-stat-lbl">Goles</div></div>
+      <div class="ph-stat"><div class="ph-stat-val" style="color:${gd>=0?'var(--green)':'var(--red)'}">${gd>=0?'+':''}${gd}</div><div class="ph-stat-lbl">Dif. Goles</div></div>
+    </div>`;
+  const rankBadgeColor=p.position==='FWD'||p.position==='WNG'?'var(--yellow)':p.position==='GK'||p.position==='DEF'?'var(--blue)':'var(--accent)';
+  const rankBadge=`<div class="ph-rank-badge" style="background:${rankBadgeColor}20;color:${rankBadgeColor};border:1px solid ${rankBadgeColor}40">
+    Puntaje ranking: ${Math.round(rankScore(p))} · ${rankCriteria(p)}
+  </div>`;
+  const matchList=pMatches.length?pMatches.map(m=>{
+    const inA=m.teamA.some(x=>x.id===id);
+    const won=(m.winner==='A'&&inA)||(m.winner==='B'&&!inA);
+    const drew=m.winner==='D';
+    const resLabel=drew?'E':won?'V':'D';
+    const resCls=drew?'res-d':won?'res-w':'res-l';
+    const rivals=inA?m.teamB:m.teamA;
+    const myScore=inA?m.scoreA:m.scoreB;
+    const rivalScore=inA?m.scoreB:m.scoreA;
+    const myGoals=m.goles&&m.goles[id]?` ⚽${m.goles[id]}`:'';
+    const mvpTag=m.mvp===id?' ⭐MVP':'';
+    return`<div class="ph-match">
+      <div class="ph-match-res ${resCls}">${resLabel}</div>
+      <div class="ph-match-info">
+        <div class="ph-match-date">${fmtDate(m.date)} · ${m.format}</div>
+        <div class="ph-match-detail">vs ${rivals.map(x=>x.name).join(', ').slice(0,38)}${myGoals}${mvpTag}</div>
+      </div>
+      <div class="ph-match-score" style="color:${won?'var(--green)':drew?'var(--yellow)':'var(--red)'}">${myScore}–${rivalScore}</div>
+    </div>`;
+  }).join(''):`<div style="color:var(--muted);font-size:13px;padding:10px 0">Sin partidos registrados.</div>`;
+  const o2=document.createElement('div');
+  o2.className='modal-ov';
+  o2.style.zIndex=400;
+  o2.style.alignItems='flex-start';
+  o2.style.paddingTop='40px';
+  o2.innerHTML=`<div class="modal-box" style="max-width:480px;text-align:left;max-height:80vh;overflow-y:auto;padding:20px 18px;">
+    <div class="ph-header">
+      <div class="ph-av" style="background:${col}25;color:${col};border:2px solid ${col}40">${in_}</div>
+      <div>
+        <div class="ph-name">${p.name} ${playerForm(id)}</div>
+        <div class="ph-pos">${pos.emoji} ${pos.name} · MVP x${p.history.mvps||0}</div>
+      </div>
+      <button onclick="this.closest('.modal-ov').remove()"
+        style="margin-left:auto;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--muted);cursor:pointer;padding:6px 10px;font-size:13px;font-weight:700;flex-shrink:0">✕</button>
+    </div>
+    ${rankBadge}${statsGrid}
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Historial</div>
+    ${matchList}
+  </div>`;
+  document.body.appendChild(o2);
+  o2.onclick=(e)=>{ if(e.target===o2) o2.remove(); };
 }
 
 </script>
