@@ -5,6 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>BalancedFC — FUT de Barrio</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAVr_YqNRo6hyZ3SnyGC3hcXHFfNev6_c4",
+    authDomain: "balance-fc.firebaseapp.com",
+    projectId: "balance-fc",
+    storageBucket: "balance-fc.firebasestorage.app",
+    messagingSenderId: "387842297687",
+    appId: "1:387842297687:web:e227a2c22b857f2b9ff812",
+    measurementId: "G-R7E174T559"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const firestore = getFirestore(app);
+  const DB_DOC = doc(firestore, "balancedfc", "data");
+
+  // Exponer funciones de Firebase al scope global
+  window._fbSave = async (data) => {
+    try {
+      await setDoc(DB_DOC, { players: data.players, matches: data.matches });
+    } catch(e) {
+      console.error("Error al guardar en Firebase:", e);
+      snack("⚠️ Error al guardar en la nube");
+    }
+  };
+
+  // Escuchar cambios en tiempo real
+  window._fbListen = (callback) => {
+    return onSnapshot(DB_DOC, (snap) => {
+      if (snap.exists()) {
+        callback(snap.data());
+      } else {
+        callback({ players: [], matches: [] });
+      }
+    }, (err) => {
+      console.error("Error al leer Firebase:", err);
+      snack("⚠️ Error al conectar con la nube");
+    });
+  };
+
+  // Señal de que Firebase está listo
+  window._firebaseReady = true;
+  document.dispatchEvent(new Event("firebase-ready"));
+</script>
 <style>
 :root{
   --bg:#080c10;
@@ -430,6 +477,34 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 .res-d{background:rgba(255,215,64,.2);color:var(--yellow);}
 .ph-rank-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:12px;}
 @keyframes snIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ── PIN / ADMIN ── */
+.admin-bar{
+  display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  padding:0 16px 12px;
+}
+.admin-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;
+  border:1px solid;transition:all .18s;
+}
+.admin-badge.locked{color:var(--muted);border-color:var(--border2);background:var(--surface2);}
+.admin-badge.unlocked{color:var(--green);border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.1);}
+.pin-dots{display:flex;gap:10px;justify-content:center;margin:18px 0;}
+.pin-dot{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid var(--border2);background:transparent;transition:all .15s;
+}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent);}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;}
+.pin-key{
+  padding:16px;border-radius:12px;border:1px solid var(--border2);
+  background:var(--surface2);color:var(--text);font-size:20px;font-weight:700;
+  font-family:'Barlow Condensed',sans-serif;cursor:pointer;transition:all .15s;text-align:center;
+}
+.pin-key:hover{border-color:var(--accent);color:var(--accent);}
+.pin-key.del{font-size:16px;color:var(--muted);}
+.pin-error{color:var(--red);font-size:12px;font-weight:700;text-align:center;margin-top:8px;min-height:18px;}
 </style>
 </head>
 <body>
@@ -439,6 +514,12 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
     <div>
       <div class="header-title">Balanced<span>FC</span></div>
       <div class="header-sub">Equipos justos · Creado por VichoSV</div>
+    </div>
+  </div>
+
+  <div class="admin-bar">
+    <div id="admin-badge" class="admin-badge locked" onclick="toggleAdmin()">
+      🔒 <span id="admin-label">Modo admin</span>
     </div>
   </div>
 
@@ -609,14 +690,118 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 
 <nav class="nav">
   <button class="nav-btn active" onclick="gotoTab('jugadores',this)"><span class="ni">👥</span>Plantel</button>
-  <button class="nav-btn" onclick="gotoTab('stats',this)"><span class="ni">📊</span>Stats</button>
+  <button class="nav-btn" onclick="gotoTab('stats',this)" id="nav-stats" data-admin="true"><span class="ni">📊</span>Stats</button>
   <button class="nav-btn" onclick="gotoTab('partido',this)"><span class="ni">⚽</span>Partido</button>
   <button class="nav-btn" onclick="gotoTab('historial',this)"><span class="ni">🏆</span>Historial</button>
-  <button class="nav-btn" onclick="gotoTab('backup',this)"><span class="ni">💾</span>Backup</button>
+  <button class="nav-btn" onclick="gotoTab('backup',this)" id="nav-backup" data-admin="true"><span class="ni">💾</span>Backup</button>
 </nav>
 
 <script>
 const STORE='bfc_v5_fut_barrio';
+
+// ── PIN ADMIN ────────────────────────────────────────────────
+const PIN_HASH = '4a2c3f3c7fbefcfdec7ee7e4ae5482c203b3ac01'; // SHA1 de "3501"
+// Para cambiar el PIN: abre consola y escribe: sha1('tupin') o usa https://sha1.online
+let adminUnlocked = false;
+
+async function sha1(str){
+  const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function isAdmin(){ return adminUnlocked; }
+
+function requireAdmin(cb){
+  if(adminUnlocked){ cb(); return; }
+  snack('🔒 Necesitas acceso admin');
+}
+
+function toggleAdmin(){
+  if(adminUnlocked){
+    adminUnlocked=false;
+    updateAdminBadge();
+    snack('🔒 Sesión admin cerrada');
+    return;
+  }
+  openPinModal();
+}
+
+function updateAdminBadge(){
+  const badge=document.getElementById('admin-badge');
+  if(adminUnlocked){
+    badge.className='admin-badge unlocked';
+    badge.innerHTML='🟢 <span>Admin activo</span>';
+  } else {
+    badge.className='admin-badge locked';
+    badge.innerHTML='🔒 <span>Modo admin</span>';
+  }
+  // Mostrar/ocultar tabs de admin
+  document.querySelectorAll('[data-admin="true"]').forEach(btn=>{
+    btn.style.display=adminUnlocked?'flex':'none';
+  });
+  // Si estaba en una tab admin y se cierra sesión, volver a jugadores
+  if(!adminUnlocked){
+    const active=document.querySelector('.section.active');
+    if(active && (active.id==='sec-stats'||active.id==='sec-backup')){
+      const jugBtn=document.querySelector('.nav-btn');
+      gotoTab('jugadores', jugBtn);
+    }
+  }
+}
+
+function openPinModal(){
+  let entered='';
+  const ov=document.createElement('div');
+  ov.className='modal-ov';
+  ov.style.zIndex=500;
+  ov.innerHTML=`
+    <div class="modal-box" style="max-width:300px;">
+      <div class="mi">🔐</div>
+      <div class="mt">Acceso Admin</div>
+      <div class="mm">Ingresa tu PIN de 4 dígitos</div>
+      <div class="pin-dots">
+        ${[0,1,2,3].map(i=>`<div class="pin-dot" id="pd-${i}"></div>`).join('')}
+      </div>
+      <div class="pin-pad">
+        ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="pin-key" onclick="pinPress('${n}')">${n}</button>`).join('')}
+        <div></div>
+        <button class="pin-key" onclick="pinPress('0')">0</button>
+        <button class="pin-key del" onclick="pinDel()">⌫</button>
+      </div>
+      <div class="pin-error" id="pin-err"></div>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.onclick=(e)=>{ if(e.target===ov) ov.remove(); };
+
+  window._pinPress = async (d)=>{
+    if(entered.length>=4) return;
+    entered+=d;
+    [0,1,2,3].forEach(i=>{
+      document.getElementById('pd-'+i).classList.toggle('filled', i<entered.length);
+    });
+    if(entered.length===4){
+      const h=await sha1(entered);
+      if(h===PIN_HASH){
+        adminUnlocked=true;
+        updateAdminBadge();
+        ov.remove();
+        snack('🟢 Acceso admin activado');
+      } else {
+        document.getElementById('pin-err').textContent='PIN incorrecto';
+        setTimeout(()=>{ entered=''; [0,1,2,3].forEach(i=>document.getElementById('pd-'+i)?.classList.remove('filled')); document.getElementById('pin-err').textContent=''; },800);
+      }
+    }
+  };
+  window._pinDel=()=>{
+    if(!entered.length) return;
+    entered=entered.slice(0,-1);
+    [0,1,2,3].forEach(i=>document.getElementById('pd-'+i).classList.toggle('filled',i<entered.length));
+    document.getElementById('pin-err').textContent='';
+  };
+}
+function pinPress(d){ window._pinPress&&window._pinPress(d); }
+function pinDel(){ window._pinDel&&window._pinDel(); }
+
 
 const SK=[
   {key:'vel',label:'Velocidad',emoji:'⚡',desc:'Rapidez en cancha',cls:'rv',chip:'cv',color:'var(--green)'},
@@ -635,16 +820,37 @@ const POSITIONS={
 
 const COLS=['#00e5ff','#00e676','#ffd740','#ff6e6e','#c47eff','#ff9100','#40c4ff','#f48fb1','#b2ff59','#ea80fc'];
 
-function load(){
-  try{
-    const data=JSON.parse(localStorage.getItem(STORE));
-    return data||{players:[],matches:[]};
-  }catch{
-    return {players:[],matches:[]};
+// ── FIREBASE SYNC ─────────────────────────────────────────────
+let _isSyncing = false; // evita loop: escucha → save → escucha
+
+function save(){
+  if(typeof window._fbSave === 'function'){
+    _isSyncing = true;
+    window._fbSave(db).finally(()=>{ setTimeout(()=>{ _isSyncing=false; }, 500); });
   }
 }
-function save(){localStorage.setItem(STORE,JSON.stringify(db));}
-let db=load();
+
+function applyRemoteData(data){
+  if(_isSyncing) return; // cambio fue nuestro, ignorar
+  db.players = data.players || [];
+  db.matches  = data.matches  || [];
+  db.players.forEach(p=>{
+    SK.forEach(s=>{ if(p[s.key]==null) p[s.key]=5; });
+    if(!p.position) p.position='MID';
+    if(!p.history)  p.history={matches:0,wins:0,losses:0,draws:0,mvps:0};
+    if(!p.statHistory) p.statHistory=[];
+  });
+  if(!db.matches) db.matches=[];
+  sel = new Set(db.players.map(p=>p.id));
+  recalcAllStats();
+  renderList();
+  renderHistory();
+  renderChemistry();
+  renderBackupInfo();
+  updateAdminBadge();
+}
+
+let db = { players: [], matches: [] };
 
 db.players.forEach(p=>{
   SK.forEach(s=>{ if(p[s.key]==null) p[s.key]=5; });
@@ -767,6 +973,9 @@ function radar(p,sz=110){
 }
 
 function gotoTab(tab,btn){
+  if((tab==='stats'||tab==='backup'||tab==='partido')&&!adminUnlocked){
+    snack('🔒 Solo disponible en modo admin'); return;
+  }
   document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));
   document.getElementById('sec-'+tab).classList.add('active');
@@ -778,6 +987,7 @@ function gotoTab(tab,btn){
 }
 
 function addPlayer(){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
   const inp=document.getElementById('inp-nombre');
   const pos=document.getElementById('inp-pos').value;
   const nombre=inp.value.trim();
@@ -802,6 +1012,7 @@ function addPlayer(){
 }
 
 function removePlayer(id){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
   const p=db.players.find(pl=>pl.id===id); if(!p)return;
   showModal('🗑️','¿Eliminar a '+p.name+'?','También seguirá apareciendo como nombre histórico en partidos ya guardados.','Eliminar',()=>{
     db.players=db.players.filter(pl=>pl.id!==id);
@@ -913,6 +1124,7 @@ function renderStats(){
 }
 function togEdit(id){editId=(editId===id)?null:id;renderStats();}
 function updStat(id,key,val){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
   const p=db.players.find(pl=>pl.id===id); if(!p)return;
   p[key]=parseInt(val);
   save();
@@ -921,6 +1133,7 @@ function updStat(id,key,val){
   renderProfiles();
 }
 function setPosition(id,pos){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
   const p=db.players.find(pl=>pl.id===id); if(!p)return;
   p.position=pos;
   save();
@@ -1120,6 +1333,7 @@ function renderTeams(){
 }
 
 function saveMatch(){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
   const {A,B,avgA,avgB}=lT;
   if(!A.length && !B.length){snack('⚠️ Primero genera los equipos');return;}
 
@@ -1217,6 +1431,7 @@ function playerForm(playerId){
 }
 
 function deleteMatch(id){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
   showModal('🗑️','Eliminar partido','Esto recalculará todas las estadísticas','Eliminar',()=>{
     db.matches=db.matches.filter(m=>m.id!==id);
     recalcAllStats();
@@ -1229,6 +1444,7 @@ function deleteMatch(id){
 }
 
 function editMatch(id){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
   const m=db.matches.find(x=>x.id===id);
   if(!m) return;
 
@@ -1400,11 +1616,31 @@ function showModal(ic,ti,ms,lbl,cb){
   o.onclick=(e)=>{if(e.target===o)o.remove();};
 }
 
-recalcAllStats();
-renderList();
-renderHistory();
-renderChemistry();
-renderBackupInfo();
+// ── INIT ─────────────────────────────────────────────────────
+function initApp(){
+  if(window._fbListen){
+    snack('🔄 Conectando con la nube...');
+    window._fbListen((data)=>{
+      applyRemoteData(data);
+    });
+  } else {
+    // fallback offline
+    recalcAllStats();
+    renderList();
+    renderHistory();
+    renderChemistry();
+    renderBackupInfo();
+    updateAdminBadge();
+  }
+}
+
+if(window._firebaseReady){
+  initApp();
+} else {
+  document.addEventListener('firebase-ready', initApp, { once: true });
+  // Si Firebase tarda más de 4s, arrancar igual con datos vacíos
+  setTimeout(()=>{ if(!window._firebaseReady){ initApp(); } }, 4000);
+}
 
 // ── BACKUP ────────────────────────────────────────────────────────────
 function exportData(){
@@ -1426,6 +1662,7 @@ function exportData(){
 }
 
 function importData(input){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
   const file=input.files[0];
   if(!file) return;
   const reader=new FileReader();
@@ -1473,8 +1710,7 @@ Esto reemplaza todos los datos actuales.`,
 function renderBackupInfo(){
   const el=document.getElementById('backup-info');
   if(!el) return;
-  const raw=localStorage.getItem(STORE)||'{}';
-  const kb=(new Blob([raw]).size/1024).toFixed(1);
+  const kb=(new Blob([JSON.stringify(db)]).size/1024).toFixed(1);
   const lastMatch=db.matches.length ? new Date(db.matches[0].date).toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'}) : '—';
   el.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -1732,4 +1968,3 @@ function openPlayerHistory(id){
 </script>
 </body>
 </html>
-
