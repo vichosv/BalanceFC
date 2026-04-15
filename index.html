@@ -5,53 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>BalancedFC — FUT de Barrio</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAVr_YqNRo6hyZ3SnyGC3hcXHFfNev6_c4",
-    authDomain: "balance-fc.firebaseapp.com",
-    projectId: "balance-fc",
-    storageBucket: "balance-fc.firebasestorage.app",
-    messagingSenderId: "387842297687",
-    appId: "1:387842297687:web:e227a2c22b857f2b9ff812",
-    measurementId: "G-R7E174T559"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const firestore = getFirestore(app);
-  const DB_DOC = doc(firestore, "balancedfc", "data");
-
-  // Exponer funciones de Firebase al scope global
-  window._fbSave = async (data) => {
-    try {
-      await setDoc(DB_DOC, { players: data.players, matches: data.matches });
-    } catch(e) {
-      console.error("Error al guardar en Firebase:", e);
-      snack("⚠️ Error al guardar en la nube");
-    }
-  };
-
-  // Escuchar cambios en tiempo real
-  window._fbListen = (callback) => {
-    return onSnapshot(DB_DOC, (snap) => {
-      if (snap.exists()) {
-        callback(snap.data());
-      } else {
-        callback({ players: [], matches: [] });
-      }
-    }, (err) => {
-      console.error("Error al leer Firebase:", err);
-      snack("⚠️ Error al conectar con la nube");
-    });
-  };
-
-  // Señal de que Firebase está listo
-  window._firebaseReady = true;
-  document.dispatchEvent(new Event("firebase-ready"));
-</script>
+<!-- Firebase compat -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 :root{
   --bg:#080c10;
@@ -691,7 +647,7 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 <nav class="nav">
   <button class="nav-btn active" onclick="gotoTab('jugadores',this)"><span class="ni">👥</span>Plantel</button>
   <button class="nav-btn" onclick="gotoTab('stats',this)" id="nav-stats" data-admin="true"><span class="ni">📊</span>Stats</button>
-  <button class="nav-btn" onclick="gotoTab('partido',this)"><span class="ni">⚽</span>Partido</button>
+  <button class="nav-btn" onclick="gotoTab('partido',this)" id="nav-partido" data-admin="true"><span class="ni">⚽</span>Partido</button>
   <button class="nav-btn" onclick="gotoTab('historial',this)"><span class="ni">🏆</span>Historial</button>
   <button class="nav-btn" onclick="gotoTab('backup',this)" id="nav-backup" data-admin="true"><span class="ni">💾</span>Backup</button>
 </nav>
@@ -742,7 +698,7 @@ function updateAdminBadge(){
   // Si estaba en una tab admin y se cierra sesión, volver a jugadores
   if(!adminUnlocked){
     const active=document.querySelector('.section.active');
-    if(active && (active.id==='sec-stats'||active.id==='sec-backup')){
+    if(active && (active.id==='sec-stats'||active.id==='sec-backup'||active.id==='sec-partido')){
       const jugBtn=document.querySelector('.nav-btn');
       gotoTab('jugadores', jugBtn);
     }
@@ -820,34 +776,26 @@ const POSITIONS={
 
 const COLS=['#00e5ff','#00e676','#ffd740','#ff6e6e','#c47eff','#ff9100','#40c4ff','#f48fb1','#b2ff59','#ea80fc'];
 
-// ── FIREBASE SYNC ─────────────────────────────────────────────
-let _isSyncing = false; // evita loop: escucha → save → escucha
+// ── FIREBASE ──────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAVr_YqNRo6hyZ3SnyGC3hcXHFfNev6_c4",
+  authDomain: "balance-fc.firebaseapp.com",
+  projectId: "balance-fc",
+  storageBucket: "balance-fc.firebasestorage.app",
+  messagingSenderId: "387842297687",
+  appId: "1:387842297687:web:e227a2c22b857f2b9ff812"
+};
+firebase.initializeApp(firebaseConfig);
+const _db = firebase.firestore();
+const _doc = _db.collection('balancedfc').doc('data');
+
+let _isSyncing = false;
 
 function save(){
-  if(typeof window._fbSave === 'function'){
-    _isSyncing = true;
-    window._fbSave(db).finally(()=>{ setTimeout(()=>{ _isSyncing=false; }, 500); });
-  }
-}
-
-function applyRemoteData(data){
-  if(_isSyncing) return; // cambio fue nuestro, ignorar
-  db.players = data.players || [];
-  db.matches  = data.matches  || [];
-  db.players.forEach(p=>{
-    SK.forEach(s=>{ if(p[s.key]==null) p[s.key]=5; });
-    if(!p.position) p.position='MID';
-    if(!p.history)  p.history={matches:0,wins:0,losses:0,draws:0,mvps:0};
-    if(!p.statHistory) p.statHistory=[];
-  });
-  if(!db.matches) db.matches=[];
-  sel = new Set(db.players.map(p=>p.id));
-  recalcAllStats();
-  renderList();
-  renderHistory();
-  renderChemistry();
-  renderBackupInfo();
-  updateAdminBadge();
+  _isSyncing = true;
+  _doc.set({ players: db.players, matches: db.matches })
+    .catch(e => { console.error(e); })
+    .finally(() => { setTimeout(() => { _isSyncing = false; }, 600); });
 }
 
 let db = { players: [], matches: [] };
@@ -973,7 +921,7 @@ function radar(p,sz=110){
 }
 
 function gotoTab(tab,btn){
-  if((tab==='stats'||tab==='backup'||tab==='partido')&&!adminUnlocked){
+  if((tab==='stats'||tab==='backup')&&!adminUnlocked){
     snack('🔒 Solo disponible en modo admin'); return;
   }
   document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
@@ -1443,6 +1391,41 @@ function deleteMatch(id){
   });
 }
 
+function addYoutubeLink(id){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
+  const m=db.matches.find(x=>x.id===id); if(!m) return;
+  const ov=document.createElement('div');
+  ov.className='modal-ov';
+  ov.style.zIndex=400;
+  ov.innerHTML=`<div class="modal-box" style="max-width:420px;text-align:left;">
+    <div class="mi">🎬</div>
+    <div class="mt" style="text-align:center">Link de YouTube</div>
+    <div class="mm" style="text-align:center">Pega la URL del video del partido</div>
+    <input type="text" id="yt-inp" placeholder="https://youtube.com/watch?v=..." value="${m.youtubeUrl||''}" style="width:100%;margin-bottom:14px">
+    <div class="mbtns">
+      <button class="btn btn-gh" onclick="this.closest('.modal-ov').remove()">Cancelar</button>
+      ${m.youtubeUrl?`<button class="btn" style="background:var(--red);color:#fff" onclick="saveYtLink('${id}','')">Quitar</button>`:''}
+      <button class="btn btn-ac" onclick="saveYtLink('${id}',document.getElementById('yt-inp').value)">Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.onclick=(e)=>{ if(e.target===ov) ov.remove(); };
+  setTimeout(()=>document.getElementById('yt-inp')?.focus(),100);
+}
+
+function saveYtLink(id, url){
+  const m=db.matches.find(x=>x.id===id); if(!m) return;
+  const clean=url.trim();
+  if(clean && !clean.match(/youtube\.com|youtu\.be/)){
+    snack('⚠️ Debe ser un link de YouTube'); return;
+  }
+  if(clean) m.youtubeUrl=clean; else delete m.youtubeUrl;
+  document.querySelector('.modal-ov')?.remove();
+  save();
+  renderHistory();
+  snack(clean ? '🎬 Video guardado' : '🗑️ Video eliminado');
+}
+
 function editMatch(id){
   if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
   const m=db.matches.find(x=>x.id===id);
@@ -1566,9 +1549,17 @@ function renderHistory(){
           </div>
         </div>
 
-        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-gh" onclick="editMatch('${m.id}')">✏️ Editar</button>
-          <button class="btn btn-del" onclick="deleteMatch('${m.id}')">🗑️ Borrar</button>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          ${m.youtubeUrl ? `<a href="${m.youtubeUrl}" target="_blank" rel="noopener"
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:rgba(255,0,0,0.12);border:1px solid rgba(255,0,0,0.35);color:#ff4444;font-size:13px;font-weight:700;text-decoration:none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            Ver video
+          </a>` : ''}
+          ${adminUnlocked ? `
+            <button class="btn btn-gh" onclick="editMatch('${m.id}')">✏️ Editar</button>
+            <button class="btn btn-gh" onclick="addYoutubeLink('${m.id}')" style="color:#ff4444;border-color:rgba(255,0,0,0.3)">🎬 ${m.youtubeUrl ? 'Editar video' : '+ Video'}</button>
+            <button class="btn btn-del" onclick="deleteMatch('${m.id}')">🗑️ Borrar</button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -1616,31 +1607,28 @@ function showModal(ic,ti,ms,lbl,cb){
   o.onclick=(e)=>{if(e.target===o)o.remove();};
 }
 
-// ── INIT ─────────────────────────────────────────────────────
-function initApp(){
-  if(window._fbListen){
-    snack('🔄 Conectando con la nube...');
-    window._fbListen((data)=>{
-      applyRemoteData(data);
-    });
-  } else {
-    // fallback offline
-    recalcAllStats();
-    renderList();
-    renderHistory();
-    renderChemistry();
-    renderBackupInfo();
-    updateAdminBadge();
-  }
-}
-
-if(window._firebaseReady){
-  initApp();
-} else {
-  document.addEventListener('firebase-ready', initApp, { once: true });
-  // Si Firebase tarda más de 4s, arrancar igual con datos vacíos
-  setTimeout(()=>{ if(!window._firebaseReady){ initApp(); } }, 4000);
-}
+// ── INIT con Firebase ─────────────────────────────────────────
+_doc.onSnapshot(snap => {
+  if (_isSyncing) return;
+  const data = snap.exists ? snap.data() : { players: [], matches: [] };
+  db.players = data.players || [];
+  db.matches  = data.matches  || [];
+  db.players.forEach(p => {
+    SK.forEach(s => { if(p[s.key]==null) p[s.key]=5; });
+    if(!p.position) p.position='MID';
+    if(!p.history)  p.history={matches:0,wins:0,losses:0,draws:0,mvps:0};
+    if(!p.statHistory) p.statHistory=[];
+  });
+  sel = new Set(db.players.map(p=>p.id));
+  recalcAllStats();
+  renderList();
+  renderHistory();
+  renderChemistry();
+  renderBackupInfo();
+  updateAdminBadge();
+}, err => {
+  console.error('Firebase error:', err);
+});
 
 // ── BACKUP ────────────────────────────────────────────────────────────
 function exportData(){
