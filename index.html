@@ -1364,43 +1364,48 @@ function renderTeams(){
   document.getElementById('sc-b').textContent=bA.toFixed(1);
 
   const playerDot=(p,teamKey)=>{
-    const col=gc(p.id),in_=playerAv(p),fs=autoEmoji(p)?18:13;
+    const col=gc(p.id),in_=playerAv(p),fs=autoEmoji(p)?22:15;
     const toTeam=teamKey==='A'?'B':'A';
+    const firstName=p.name.split(' ')[0].toUpperCase();
     return`<div onclick="movePlayer('${p.id}','${teamKey}')"
       title="${p.name} · Toca para mover al equipo ${toTeam}"
-      style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;min-width:52px;max-width:64px">
-      <div style="width:44px;height:44px;border-radius:50%;background:${col};
+      style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;min-width:58px;max-width:72px">
+      <div style="width:50px;height:50px;border-radius:50%;background:${col};
         display:flex;align-items:center;justify-content:center;font-size:${fs}px;
-        border:2px solid rgba(255,255,255,0.35);box-shadow:0 2px 8px rgba(0,0,0,0.5);
+        border:2.5px solid rgba(255,255,255,0.5);
+        box-shadow:0 3px 12px rgba(0,0,0,0.6),0 0 0 1px ${col}60;
         transition:transform .15s"
         onmouseover="this.style.transform='scale(1.12)'"
         onmouseout="this.style.transform='scale(1)'">
         ${in_}
       </div>
-      <div style="font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);
-        max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center">
-        ${p.name.split(' ')[0]}
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;
+        letter-spacing:.5px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,1);
+        max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center">
+        ${firstName}
       </div>
-      <div style="font-size:9px;color:rgba(255,255,255,.6)">${posObj(p.position).emoji} ${p.score.toFixed(1)}</div>
     </div>`;
   };
 
   const fieldBlock=(team,label,ac,teamKey)=>{
     const rows=makeFormationRows(team);
     const rowsHTML=rows.map(row=>`
-      <div style="display:flex;justify-content:center;align-items:flex-end;gap:10px;padding:4px 0">
+      <div style="display:flex;justify-content:center;align-items:center;gap:8px;padding:6px 4px">
         ${row.map(p=>playerDot(p,teamKey)).join('')}
       </div>`).join('');
-    return`<div style="border-radius:14px;overflow:hidden;margin-bottom:12px;border:1px solid var(--border)">
-      <div class="th" style="background:${ac}18;border-bottom:1px solid ${ac}30">
+    return`<div style="border-radius:14px;overflow:hidden;margin-bottom:12px;border:1px solid rgba(100,180,255,0.2)">
+      <div class="th" style="background:rgba(0,40,120,0.7);border-bottom:1px solid rgba(100,180,255,0.2)">
         <span style="color:${ac}">${label}</span>
         <span class="tpr" style="color:${ac}">Prom ${tAvg(team).toFixed(1)}</span>
       </div>
-      <div style="background:linear-gradient(180deg,#143d14 0%,#1e5c1e 40%,#1e5c1e 60%,#143d14 100%);
-        padding:10px 8px;position:relative;min-height:160px">
-        <div style="position:absolute;left:8%;right:8%;top:50%;height:1px;background:rgba(255,255,255,0.12);pointer-events:none"></div>
-        <div style="position:absolute;left:50%;top:35%;transform:translate(-50%,-50%);
-          width:52px;height:52px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);pointer-events:none"></div>
+      <div style="
+        background:linear-gradient(180deg,rgba(0,15,60,0.92) 0%,rgba(0,40,110,0.82) 45%,rgba(0,40,110,0.82) 55%,rgba(0,15,60,0.92) 100%);
+        padding:14px 8px 10px;position:relative;min-height:180px;">
+        <!-- línea central -->
+        <div style="position:absolute;left:6%;right:6%;top:50%;height:1px;background:rgba(255,255,255,0.13);pointer-events:none"></div>
+        <!-- círculo central -->
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+          width:56px;height:56px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);pointer-events:none"></div>
         ${rowsHTML}
       </div>
       <div style="display:flex;justify-content:center;padding:8px 0 4px;background:var(--surface)">
