@@ -513,7 +513,7 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 </div>
 
 <div class="app">
-  <div class="header">
+  <div class="header" onclick="gotoTab('home',document.getElementById('nav-home'))" style="cursor:pointer" title="Ir al inicio">
     <div class="header-icon">⚽</div>
     <div>
       <div class="header-title">Balanced<span>FC</span></div>
@@ -692,7 +692,7 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 </div>
 
 <nav class="nav">
-  <button class="nav-btn active" onclick="gotoTab('home',this)" id="nav-home"><span class="ni">🏠</span>Inicio</button>
+  <button class="nav-btn active" onclick="gotoTab('home',this)" id="nav-home" style="display:none"></button>
   <button class="nav-btn" onclick="gotoTab('jugadores',this)"><span class="ni">👥</span>Plantel</button>
   <button class="nav-btn" onclick="gotoTab('stats',this)" id="nav-stats" data-admin="true"><span class="ni">📊</span>Stats</button>
   <button class="nav-btn" onclick="gotoTab('partido',this)" id="nav-partido"><span class="ni">⚽</span>Partido</button>
@@ -731,26 +731,15 @@ function currentStreak(playerId){
   return{streak,result};
 }
 
-function autoEmoji(p){
-  const h=p.history||{};
-  const pj=h.matches||0;
-  if(pj===0) return null;
-  const{streak,result}=currentStreak(p.id);
-  if(streak>=3&&result==='W') return '🔥';
-  if(streak>=3&&result==='L') return '🥶';
-  if((h.mvps||0)>=3) return '👑';
-  if(pj>=3&&(h.goals||0)/pj>=1.2) return '⚽';
-  if(ov(p)>=85) return '🦁';
-  if(pj>=5&&winRate(p)>=70) return '🦅';
-  if(p.position==='DEF'&&p.def>=8) return '🛡️';
-  if(p.position==='FWD'&&p.vel>=8) return '⚡';
-  if(p.position==='MID'&&p.tec>=8) return '🎯';
-  if(pj>=10) return '💪';
-  return null;
-}
+const PLAYER_EMOJIS=['⚽','🏅','🥇','🎯','🦅','🦁','🐉','🐺','🦊','🦈','🐯','🦂',
+  '🌪️','☄️','💥','⚡','🔱','🎖️','🏆','👊','🤺','🎪','🌊','🔥','❄️','🌙','⭐','💫','🎭','🃏'];
 
-function playerAv(p){return autoEmoji(p)||ini(p.name);}
-function avFontSize(p,def){return autoEmoji(p)?Math.round(def*1.5):def;}
+function randomEmoji(){return PLAYER_EMOJIS[Math.floor(Math.random()*PLAYER_EMOJIS.length)];}
+
+function autoEmoji(p){return p.emoji||null;}
+
+function playerAv(p){return p.emoji||ini(p.name);}
+function avFontSize(p,def){return p.emoji?Math.round(def*1.5):def;}
 
 // ── PIN ADMIN ────────────────────────────────────────────────
 const PIN_HASH = '726e69abaf9d464993a90e72970be5485a927aac'; // SHA1 de "6767"
@@ -1026,6 +1015,7 @@ function gotoTab(tab,btn){
     snack('🔒 Solo disponible en modo admin'); return;
   }
   if(tab!=='home'&&_homeTimer){clearInterval(_homeTimer);_homeTimer=null;}
+  if(tab!=='conv'&&_convTimer){clearInterval(_convTimer);_convTimer=null;}
   document.querySelectorAll('.section').forEach(e=>e.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));
   document.getElementById('sec-'+tab).classList.add('active');
@@ -1053,6 +1043,7 @@ function addPlayer(){
     id:uid(),
     name:nombre,
     position:pos,
+    emoji:randomEmoji(),
     vel:5, tec:5, def:5, tir:5, sta:5, fis:5,
     history:{matches:0,wins:0,losses:0,draws:0,mvps:0}
   };
@@ -1371,20 +1362,22 @@ function renderTeams(){
   document.getElementById('sc-b').textContent=bA.toFixed(1);
 
   const playerDot=(p,teamKey)=>{
-    const col=gc(p.id),in_=playerAv(p),fs=autoEmoji(p)?22:15;
+    const score=Math.round(ov(p));
     const toTeam=teamKey==='A'?'B':'A';
     const firstName=p.name.split(' ')[0].toUpperCase();
     return`<div onclick="movePlayer('${p.id}','${teamKey}')"
       title="${p.name} · Toca para mover al equipo ${toTeam}"
       style="display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;min-width:58px;max-width:72px">
-      <div style="width:50px;height:50px;border-radius:50%;background:${col};
-        display:flex;align-items:center;justify-content:center;font-size:${fs}px;
-        border:2.5px solid rgba(255,255,255,0.5);
-        box-shadow:0 3px 12px rgba(0,0,0,0.6),0 0 0 1px ${col}60;
+      <div style="width:50px;height:50px;border-radius:50%;
+        background:linear-gradient(145deg,#07183a,#0d2560);
+        display:flex;align-items:center;justify-content:center;
+        font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:19px;color:#e8f4ff;
+        border:2.5px solid rgba(100,170,255,0.55);
+        box-shadow:0 3px 14px rgba(0,0,0,0.7),0 0 0 1px rgba(80,140,255,0.2);
         transition:transform .15s"
         onmouseover="this.style.transform='scale(1.12)'"
         onmouseout="this.style.transform='scale(1)'">
-        ${in_}
+        ${score}
       </div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;
         letter-spacing:.5px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,1);
@@ -1825,12 +1818,15 @@ _doc.onSnapshot(snap => {
   db.convocatoria  = data.convocatoria  || {activa:false,inscripciones:[]};
   db.premios       = data.premios       || {};
   hideSplash();
+  let _emojiChanged=false;
   db.players.forEach(p => {
     SK.forEach(s => { if(p[s.key]==null) p[s.key]=5; });
     if(!p.position) p.position='MID';
     if(!p.history)  p.history={matches:0,wins:0,losses:0,draws:0,mvps:0};
     if(!p.statHistory) p.statHistory=[];
+    if(!p.emoji){p.emoji=randomEmoji();_emojiChanged=true;}
   });
+  if(_emojiChanged) save();
   sel = new Set(db.players.map(p=>p.id));
   recalcAllStats();
   renderList();
@@ -1969,6 +1965,7 @@ function fmtConvFecha(f){
 
 // Countdown hacia la fecha de la convocatoria activa
 let _homeTimer=null;
+let _convTimer=null;
 function getCountdown(){
   const cv=db.convocatoria;
   if(!cv?.activa||!cv.fecha) return null;
@@ -2077,6 +2074,7 @@ function renderHome(){
 function renderConv(){
   const el=document.getElementById('conv-view');
   if(!el) return;
+  if(_convTimer){clearInterval(_convTimer);_convTimer=null;}
   const cv=db.convocatoria||{};
 
   if(!cv.activa){
@@ -2127,7 +2125,29 @@ function renderConv(){
   const pct=Math.min(100,(confirmados.length/maxJ)*100);
   const lleno=confirmados.length>=maxJ;
 
-  let html=`
+  const buildConvCountdown=()=>{
+    const c=getCountdown();
+    if(!cv.fecha) return '';
+    if(!c) return '';
+    if(c.passed) return `<div style="text-align:center;padding:10px 0 4px;font-size:15px;font-weight:700;color:var(--yellow)">🏃 ¡El partido es hoy!</div>`;
+    const pad=v=>String(v).padStart(2,'0');
+    return`<div style="display:flex;justify-content:center;gap:10px;padding:10px 0 4px">
+      ${[['cd2-d',c.d,'días'],['cd2-h',c.h,'hrs'],['cd2-m',c.m,'min'],['cd2-s',c.s,'seg']].map(([id,v,lbl])=>`
+      <div style="text-align:center;min-width:36px">
+        <div id="${id}" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;color:var(--accent);line-height:1">${pad(v)}</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">${lbl}</div>
+      </div>`).join('<div style="font-size:22px;color:var(--muted);padding-top:2px">:</div>')}
+    </div>`;
+  };
+
+  let html=``;
+  if(cv.fecha){
+    html+=`<div class="card" style="margin-bottom:12px;text-align:center;padding:12px 16px">
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">⏱️ Tiempo para el partido</div>
+      <div id="conv-countdown-wrap">${buildConvCountdown()}</div>
+    </div>`;
+  }
+  html+=`
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px">
         <div>
@@ -2147,6 +2167,7 @@ function renderConv(){
           Compartir lista
         </button>
         <button class="btn btn-gh" onclick="crearConv()">🔄 Nueva</button>
+        ${adminUnlocked?`<button class="btn" onclick="editConv()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)">✏️</button>`:''}
         ${adminUnlocked?`<button class="btn btn-del" onclick="resetConv()" style="border:1px solid rgba(255,82,82,.3)">🗑️</button>`:''}
       </div>
     </div>`;
@@ -2173,6 +2194,17 @@ function renderConv(){
   }
 
   document.getElementById('conv-view').innerHTML=html;
+
+  if(cv.fecha){
+    _convTimer=setInterval(()=>{
+      const wrap=document.getElementById('conv-countdown-wrap');
+      if(!wrap){clearInterval(_convTimer);_convTimer=null;return;}
+      const c=getCountdown();
+      if(!c||c.passed){wrap.innerHTML=buildConvCountdown();return;}
+      const upd=(id,v)=>{const el2=document.getElementById(id);if(el2)el2.textContent=String(v).padStart(2,'0');};
+      upd('cd2-d',c.d);upd('cd2-h',c.h);upd('cd2-m',c.m);upd('cd2-s',c.s);
+    },1000);
+  }
 }
 
 function crearConv(){
@@ -2215,6 +2247,54 @@ function confirmarCrearConv(){
   db.convocatoria={activa:true,formato,fecha,hora,lugar,inscripciones:[]};
   save(); renderConv();
   snack('📋 Convocatoria creada');
+}
+
+function editConv(){
+  if(!adminUnlocked){snack('🔒 Solo el admin puede editar');return;}
+  const cv=db.convocatoria||{};
+  const ov=document.createElement('div');
+  ov.className='modal-ov'; ov.style.zIndex=400;
+  ov.innerHTML=`<div class="modal-box" style="max-width:400px;text-align:left">
+    <div class="mi">✏️</div>
+    <div class="mt" style="text-align:center;margin-bottom:16px">Editar convocatoria</div>
+    <div class="itip" style="margin-bottom:14px">La lista de inscritos no se modifica.</div>
+    <div style="margin-bottom:10px">
+      <label>Formato</label>
+      <select id="ecv-formato" style="width:100%">
+        <option ${cv.formato==='4v4'?'selected':''}>4v4</option>
+        <option ${cv.formato==='5v5'||!cv.formato?'selected':''}>5v5</option>
+        <option ${cv.formato==='6v6'?'selected':''}>6v6</option>
+        <option ${cv.formato==='7v7'?'selected':''}>7v7</option>
+        <option ${cv.formato==='Libre'?'selected':''}>Libre</option>
+      </select>
+    </div>
+    <div class="grid-2" style="margin-bottom:10px">
+      <div><label>Fecha</label><input type="date" id="ecv-fecha" value="${cv.fecha||''}" style="width:100%"></div>
+      <div><label>Hora</label><input type="time" id="ecv-hora" value="${cv.hora||''}" style="width:100%"></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label>Lugar</label>
+      <input type="text" id="ecv-lugar" value="${cv.lugar||''}" placeholder="Ej: Cancha Los Pinos" style="width:100%">
+    </div>
+    <div class="mbtns">
+      <button class="btn btn-gh" onclick="this.closest('.modal-ov').remove()">Cancelar</button>
+      <button class="btn btn-ac" onclick="confirmarEditConv()">Guardar cambios</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.onclick=(e)=>{if(e.target===ov)ov.remove();};
+}
+
+function confirmarEditConv(){
+  if(!adminUnlocked){snack('🔒 Solo el admin puede editar');return;}
+  const formato=document.getElementById('ecv-formato')?.value||'5v5';
+  const fecha=document.getElementById('ecv-fecha')?.value.trim()||'';
+  const hora=document.getElementById('ecv-hora')?.value.trim()||'';
+  const lugar=document.getElementById('ecv-lugar')?.value.trim()||'';
+  document.querySelector('.modal-ov')?.remove();
+  db.convocatoria={...db.convocatoria, formato, fecha, hora, lugar};
+  save(); renderConv();
+  snack('✅ Convocatoria actualizada');
 }
 
 function inscribirse(playerId, status){
@@ -2289,7 +2369,8 @@ function shareConvWA(){
 
   msg+=`\n-----------------------------\n`;
   msg+=faltan>0?`⚠️ Faltan ${faltan} jugador${faltan!==1?'es':''}\n`:`✅ ¡Cupo completo!\n`;
-  msg+=`_BalancedFC · Fút de barrio_`;
+  const appUrl=window.location.origin+window.location.pathname;
+  msg+=`\n🔗 Inscríbete: ${appUrl}`;
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
