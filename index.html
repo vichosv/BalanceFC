@@ -1982,6 +1982,39 @@ function getCountdown(){
   };
 }
 
+function showGuia(){
+  const ov=document.createElement('div');
+  ov.className='modal-ov'; ov.style.zIndex=500;
+  const steps=[
+    {emoji:'📋',title:'Inscríbete al partido',desc:'Ve a <b>Lista</b> y toca tu nombre. Elige <b>✅ Voy</b>, <b>❓ Tal vez</b> o <b>❌ No voy</b>. Los primeros en confirmar quedan en el equipo; el resto va a <b>Reserva</b>.'},
+    {emoji:'⚽',title:'Se generan los equipos',desc:'El admin va a <b>Partido</b>, selecciona los jugadores que confirmaron y presiona <b>Generar equipos</b>. El sistema los balancea por nivel. Puedes mover jugadores entre equipos tocando su círculo.'},
+    {emoji:'📊',title:'Stats y evolución',desc:'Cada jugador tiene 5 atributos: <b>⚡Vel · 🎯Téc · 🛡️Def · 🔥Tir · 💪Sta</b>. Suben o bajan según tus partidos: goles, MVP, rachas, resultado. Cuanto más alto el stat, más lento sube.'},
+    {emoji:'🏆',title:'Historial y premios',desc:'En <b>Historial</b> puedes ver todos los partidos jugados con sus resultados y goleadores. En <b>Premios</b> se calculan automáticamente el mejor jugador, la mejor dupla y más.'},
+    {emoji:'🔒',title:'¿Qué puede hacer el admin?',desc:'El admin (PIN privado) puede crear y editar la convocatoria, ajustar stats, registrar partidos y ver las pestañas de Stats y Premios. Los jugadores solo gestionan su inscripción.'},
+  ];
+  ov.innerHTML=`<div class="modal-box" style="max-width:420px;text-align:left;max-height:88vh;overflow-y:auto">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:36px;margin-bottom:4px">📖</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;letter-spacing:1px">Guía para jugadores</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">Todo lo que necesitas saber</div>
+    </div>
+    ${steps.map((s,i)=>`
+    <div style="display:flex;gap:12px;margin-bottom:18px;padding-bottom:18px;${i<steps.length-1?'border-bottom:1px solid var(--border)':''}">
+      <div style="font-size:28px;flex-shrink:0;margin-top:2px">${s.emoji}</div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;margin-bottom:4px">${i+1}. ${s.title}</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.5">${s.desc}</div>
+      </div>
+    </div>`).join('')}
+    <div style="background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.2);border-radius:10px;padding:12px;margin-bottom:18px;font-size:12px;color:var(--muted);line-height:1.5">
+      💡 <b style="color:var(--text)">Tip:</b> El logo <b>BalancedFC</b> arriba siempre te vuelve al inicio. La app se sincroniza en tiempo real — todos ven la lista actualizada al instante.
+    </div>
+    <button class="btn btn-ac btn-full" onclick="this.closest('.modal-ov').remove()">¡Entendido, a jugar! ⚽</button>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.onclick=(e)=>{if(e.target===ov)ov.remove();};
+}
+
 function renderHome(){
   const el=document.getElementById('home-view');
   if(!el) return;
@@ -2058,6 +2091,17 @@ function renderHome(){
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       ${navGrid}
+    </div>
+
+    <div onclick="showGuia()" style="margin-top:10px;background:var(--surface2);border:1px solid var(--border);
+      border-radius:14px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;
+      transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <span style="font-size:26px">📖</span>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px">¿Primera vez aquí?</div>
+        <div style="font-size:12px;color:var(--muted)">Guía rápida para jugadores nuevos</div>
+      </div>
+      <span style="margin-left:auto;color:var(--muted);font-size:18px">›</span>
     </div>`;
 
   // Actualizar countdown cada segundo
