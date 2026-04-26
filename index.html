@@ -265,8 +265,8 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 .t-bronze   .fc-bg{background:linear-gradient(150deg,#7c4a1e 0%,#b8722a 45%,#8b5a1c 100%);}
 .t-silver   .fc-bg{background:linear-gradient(150deg,#4a5566 0%,#8a9ab0 45%,#5a6a7a 100%);}
 .t-gold     .fc-bg{background:linear-gradient(150deg,#7a5500 0%,#d4a017 45%,#9a6e00 100%);}
-.t-emerald  .fc-bg{background:linear-gradient(150deg,#003d1a 0%,#00a854 45%,#005c28 100%);}
-.t-sapphire .fc-bg{background:linear-gradient(150deg,#001a4a 0%,#0055cc 45%,#002a7a 100%);}
+.t-emerald  .fc-bg{background:linear-gradient(150deg,#001a4a 0%,#0055cc 45%,#002a7a 100%);}
+.t-sapphire .fc-bg{background:linear-gradient(150deg,#00204a 0%,#0077e6 45%,#003570 100%);}
 .t-ruby     .fc-bg{background:linear-gradient(150deg,#3d0010 0%,#cc0033 45%,#5c0018 100%);}
 .t-diamond  .fc-bg{background:linear-gradient(150deg,#0a1a2e 0%,#4488cc 30%,#aaddff 55%,#4488cc 80%,#0a1a2e 100%);}
 .t-legend   .fc-bg{background:linear-gradient(150deg,#1a0e00 0%,#c47a00 25%,#ffe066 50%,#c47a00 75%,#1a0e00 100%);}
@@ -274,21 +274,22 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 .t-bronze   .fc-in{color:#ffe4b0;}
 .t-silver   .fc-in{color:#e8f0f8;}
 .t-gold     .fc-in{color:#fff4b0;}
-.t-emerald  .fc-in{color:#b0ffd8;}
-.t-sapphire .fc-in{color:#b0d4ff;}
+.t-emerald  .fc-in{color:#b0d4ff;}
+.t-sapphire .fc-in{color:#c0ddff;}
 .t-ruby     .fc-in{color:#ffb0c0;}
 .t-diamond  .fc-in{color:#e0f4ff;}
 .t-legend   .fc-in{color:#fff8dc;}
 .t-diamond  .fc-shine{background:linear-gradient(135deg,rgba(255,255,255,.28) 0%,transparent 45%,rgba(180,230,255,.1) 100%);}
 .t-legend   .fc-shine{background:linear-gradient(135deg,rgba(255,255,255,.22) 0%,transparent 50%,rgba(255,220,80,.12) 100%);}
-/* ── MARCOS POR LOGRO ── */
-.frame-rank1{box-shadow:inset 0 0 0 3px #ffd700,0 0 24px rgba(255,215,0,.45);animation:pulse-gold 2s ease-in-out infinite;}
-.frame-rank2{box-shadow:inset 0 0 0 3px #c0c0c0,0 0 16px rgba(192,192,192,.35);}
-.frame-rank3{box-shadow:inset 0 0 0 3px #cd7f32,0 0 14px rgba(205,127,50,.3);}
-.frame-mvp  {box-shadow:inset 0 0 0 3px #ffd740,0 0 18px rgba(255,215,64,.4);}
-.frame-gk   {box-shadow:inset 0 0 0 3px #00e676,0 0 16px rgba(0,230,118,.35);}
-.frame-gol  {box-shadow:inset 0 0 0 3px #00e5ff,0 0 16px rgba(0,229,255,.3);}
-@keyframes pulse-gold{0%,100%{box-shadow:inset 0 0 0 3px #ffd700,0 0 18px rgba(255,215,0,.4);}50%{box-shadow:inset 0 0 0 3px #ffe866,0 0 32px rgba(255,215,0,.7);}}
+/* ── MARCOS POR LOGRO — div interno para que overflow:hidden no los corte ── */
+.fc-frame-el{position:absolute;inset:0;border-radius:16px;pointer-events:none;z-index:5;border:3px solid transparent;}
+.frame-rank1 .fc-frame-el{border-color:#ffd700;box-shadow:inset 0 0 18px rgba(255,215,0,.35);animation:pulse-gold 2s ease-in-out infinite;}
+.frame-rank2 .fc-frame-el{border-color:#d8d8d8;box-shadow:inset 0 0 14px rgba(210,210,210,.3);}
+.frame-rank3 .fc-frame-el{border-color:#cd7f32;box-shadow:inset 0 0 12px rgba(205,127,50,.28);}
+.frame-mvp   .fc-frame-el{border-color:#ffd740;box-shadow:inset 0 0 12px rgba(255,215,64,.28);}
+.frame-gk    .fc-frame-el{border-color:#00e676;box-shadow:inset 0 0 12px rgba(0,230,118,.25);}
+.frame-gol   .fc-frame-el{border-color:#00e5ff;box-shadow:inset 0 0 12px rgba(0,229,255,.22);}
+@keyframes pulse-gold{0%,100%{border-color:#ffd700;box-shadow:inset 0 0 14px rgba(255,215,0,.3);}50%{border-color:#ffe866;box-shadow:inset 0 0 28px rgba(255,215,0,.6);}}
 /* Badges de logro */
 .fc-badges{
   position:absolute;top:6px;left:50%;transform:translateX(-50%);
@@ -717,7 +718,7 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
   </div>
 
   <div class="section" id="sec-historial">
-    <div class="sec-title">Historial + Ranking</div>
+    <div id="hist-season-title"></div>
     <div id="hist-summary"></div>
     <div class="card chem-section" style="margin-bottom:12px">
       <div class="sec-title">Química de equipo 🤝</div>
@@ -959,14 +960,14 @@ function showAlert(id,m,c='var(--red)'){
 }
 function posObj(pos){return POSITIONS[pos] || POSITIONS.MID;}
 function tier(o){
-  if(o>=90) return't-legend';
+  if(o>=85) return't-legend';
   if(o>=80) return't-diamond';
-  if(o>=72) return't-ruby';
-  if(o>=64) return't-sapphire';
-  if(o>=56) return't-emerald';
-  if(o>=46) return't-gold';
-  if(o>=35) return't-silver';
-  if(o>=22) return't-bronze';
+  if(o>=75) return't-ruby';
+  if(o>=70) return't-sapphire';
+  if(o>=65) return't-emerald';
+  if(o>=60) return't-gold';
+  if(o>=55) return't-silver';
+  if(o>=50) return't-bronze';
   return't-iron';
 }
 function hasHatTrick(playerId){
@@ -1172,6 +1173,7 @@ function renderList(){
     card.onclick=()=>openPlayerHistory(p.id);
     card.innerHTML=`
       <div class="fc-bg"></div><div class="fc-shine"></div>
+      <div class="fc-frame-el"></div>
       ${badges.length?`<div class="fc-badges">${badges.map(b=>`<span class="fc-badge">${b}</span>`).join('')}</div>`:''}
       <div class="fc-in">
         <div class="fc-top">
@@ -1812,6 +1814,18 @@ function editMatch(id){
 function renderHistory(){
   const sumEl=document.getElementById('hist-summary');
   const listEl=document.getElementById('hist-list');
+  const titleEl=document.getElementById('hist-season-title');
+  const tempNombre=(db.premios?.temporada||'').trim();
+  if(titleEl) titleEl.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;letter-spacing:1px;line-height:1">
+          ${tempNombre||'Historial · Ranking'}
+        </div>
+        ${tempNombre?`<div style="font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:2px">Historial · Ranking</div>`:''}
+      </div>
+      ${adminUnlocked?`<button class="edit-btn" onclick="editTemporada()" style="flex-shrink:0">${tempNombre?'✏️':'+ Temporada'}</button>`:''}
+    </div>`;
 
   if(!db.matches.length){
     sumEl.innerHTML='';
@@ -1833,6 +1847,7 @@ function renderHistory(){
     {label:'BLOQUE A',icon:'👑',color:'#ffd700',bg:'rgba(255,215,0,.06)',border:'rgba(255,215,0,.25)'},
     {label:'BLOQUE B',icon:'⚡',color:'#00e5ff',bg:'rgba(0,229,255,.04)',border:'rgba(0,229,255,.2)'},
     {label:'BLOQUE C',icon:'🔥',color:'#ff9100',bg:'rgba(255,145,0,.04)',border:'rgba(255,145,0,.18)'},
+    {label:'BLOQUE D',icon:'⚔️',color:'#c47eff',bg:'rgba(196,126,255,.04)',border:'rgba(196,126,255,.2)'},
     {label:'ZONA DE RIESGO',icon:'💀',color:'#ff5252',bg:'rgba(255,82,82,.05)',border:'rgba(255,82,82,.25)'},
   ];
 
