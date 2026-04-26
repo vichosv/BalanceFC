@@ -260,16 +260,45 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
   margin-top:4px;font-size:8.5px;font-family:'Barlow',sans-serif;font-weight:700;opacity:.8;text-align:center;line-height:1.3;
 }
 
-.t-bronze .fc-bg{background:linear-gradient(150deg,#7c4a1e 0%,#b8722a 45%,#8b5a1c 100%);}
-.t-silver .fc-bg{background:linear-gradient(150deg,#4a5566 0%,#8a9ab0 45%,#5a6a7a 100%);}
-.t-gold   .fc-bg{background:linear-gradient(150deg,#7a5500 0%,#d4a017 45%,#9a6e00 100%);}
-.t-rare   .fc-bg{background:linear-gradient(150deg,#1a0533 0%,#7a2bd4 45%,#2a0a4a 100%);}
-.t-elite  .fc-bg{background:linear-gradient(150deg,#001525 0%,#0066cc 45%,#003055 100%);}
-.t-bronze .fc-in{color:#ffe4b0;}
-.t-silver .fc-in{color:#e8f0f8;}
-.t-gold .fc-in{color:#fff4b0;}
-.t-rare .fc-in{color:#e8d0ff;}
-.t-elite .fc-in{color:#b0d8ff;}
+/* ── TIERS ── */
+.t-iron     .fc-bg{background:linear-gradient(150deg,#1a1a1e 0%,#3a3a44 45%,#22222a 100%);}
+.t-bronze   .fc-bg{background:linear-gradient(150deg,#7c4a1e 0%,#b8722a 45%,#8b5a1c 100%);}
+.t-silver   .fc-bg{background:linear-gradient(150deg,#4a5566 0%,#8a9ab0 45%,#5a6a7a 100%);}
+.t-gold     .fc-bg{background:linear-gradient(150deg,#7a5500 0%,#d4a017 45%,#9a6e00 100%);}
+.t-emerald  .fc-bg{background:linear-gradient(150deg,#003d1a 0%,#00a854 45%,#005c28 100%);}
+.t-sapphire .fc-bg{background:linear-gradient(150deg,#001a4a 0%,#0055cc 45%,#002a7a 100%);}
+.t-ruby     .fc-bg{background:linear-gradient(150deg,#3d0010 0%,#cc0033 45%,#5c0018 100%);}
+.t-diamond  .fc-bg{background:linear-gradient(150deg,#0a1a2e 0%,#4488cc 30%,#aaddff 55%,#4488cc 80%,#0a1a2e 100%);}
+.t-legend   .fc-bg{background:linear-gradient(150deg,#1a0e00 0%,#c47a00 25%,#ffe066 50%,#c47a00 75%,#1a0e00 100%);}
+.t-iron     .fc-in{color:#c0c4cc;}
+.t-bronze   .fc-in{color:#ffe4b0;}
+.t-silver   .fc-in{color:#e8f0f8;}
+.t-gold     .fc-in{color:#fff4b0;}
+.t-emerald  .fc-in{color:#b0ffd8;}
+.t-sapphire .fc-in{color:#b0d4ff;}
+.t-ruby     .fc-in{color:#ffb0c0;}
+.t-diamond  .fc-in{color:#e0f4ff;}
+.t-legend   .fc-in{color:#fff8dc;}
+.t-diamond  .fc-shine{background:linear-gradient(135deg,rgba(255,255,255,.28) 0%,transparent 45%,rgba(180,230,255,.1) 100%);}
+.t-legend   .fc-shine{background:linear-gradient(135deg,rgba(255,255,255,.22) 0%,transparent 50%,rgba(255,220,80,.12) 100%);}
+/* ── MARCOS POR LOGRO ── */
+.frame-rank1{box-shadow:inset 0 0 0 3px #ffd700,0 0 24px rgba(255,215,0,.45);animation:pulse-gold 2s ease-in-out infinite;}
+.frame-rank2{box-shadow:inset 0 0 0 3px #c0c0c0,0 0 16px rgba(192,192,192,.35);}
+.frame-rank3{box-shadow:inset 0 0 0 3px #cd7f32,0 0 14px rgba(205,127,50,.3);}
+.frame-mvp  {box-shadow:inset 0 0 0 3px #ffd740,0 0 18px rgba(255,215,64,.4);}
+.frame-gk   {box-shadow:inset 0 0 0 3px #00e676,0 0 16px rgba(0,230,118,.35);}
+.frame-gol  {box-shadow:inset 0 0 0 3px #00e5ff,0 0 16px rgba(0,229,255,.3);}
+@keyframes pulse-gold{0%,100%{box-shadow:inset 0 0 0 3px #ffd700,0 0 18px rgba(255,215,0,.4);}50%{box-shadow:inset 0 0 0 3px #ffe866,0 0 32px rgba(255,215,0,.7);}}
+/* Badges de logro */
+.fc-badges{
+  position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  display:flex;gap:3px;z-index:4;
+}
+.fc-badge{
+  font-size:11px;background:rgba(0,0,0,.55);border-radius:6px;
+  padding:1px 4px;backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,.15);
+}
 
 .psi{
   display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface2);
@@ -560,8 +589,16 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 
   <div class="section" id="sec-stats">
     <div class="sec-title">Editar jugador</div>
-    <div class="itip">⚡ Vel · 🎯 Téc · 🛡️ Def · 🔥 Tir · 💪 Sta · 🦁 Fís — del 1 al 10</div>
+    <div class="itip">⚡ Vel · 🎯 Téc · 🛡️ Def · 🔥 Tir · 💪 Sta · 🦁 Fís — del 10 al 100</div>
     <div id="stats-ed"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Primero agrega jugadores.</div></div></div>
+    <div class="card" style="margin-top:8px;border:1px solid rgba(0,229,255,.15)">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">💾 Backup de datos</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">Exporta todos los datos actuales a un archivo JSON. Guarda antes de hacer cambios importantes.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-gh" onclick="exportarBackup()">⬇️ Exportar</button>
+        <label class="btn btn-gh" style="cursor:pointer">⬆️ Restaurar<input type="file" accept=".json" style="display:none" onchange="importarBackup(this)"></label>
+      </div>
+    </div>
     <div class="card" style="margin-top:8px;border:1px solid rgba(255,82,82,.2)">
       <div style="font-weight:700;font-size:14px;margin-bottom:6px">🔄 Recalcular evolución de stats</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">Replay de todos los partidos guardados con el sistema actual (rendimientos decrecientes). Restaura las stats base de cada jugador y las recalcula desde el partido más antiguo.</div>
@@ -906,7 +943,7 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function gc(id){return COLS[parseInt(id.replace(/[^\da-z]/gi,''),36)%COLS.length] || COLS[Math.floor(Math.random()*COLS.length)];}
 function ini(n){return n.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);}
 function avg(p){return SK.reduce((s,sk)=>s+(p[sk.key]||0),0)/SK.length;}
-function ov(p){return Math.round(avg(p)*10);}
+function ov(p){return Math.round(avg(p));}
 function snack(m){
   document.querySelectorAll('.snack').forEach(e=>e.remove());
   const el=document.createElement('div');
@@ -921,7 +958,17 @@ function showAlert(id,m,c='var(--red)'){
   setTimeout(()=>{el.innerHTML='';},2500);
 }
 function posObj(pos){return POSITIONS[pos] || POSITIONS.MID;}
-function tier(o){if(o>=85)return't-elite';if(o>=75)return't-rare';if(o>=65)return't-gold';if(o>=55)return't-silver';return't-bronze';}
+function tier(o){
+  if(o>=90) return't-legend';
+  if(o>=80) return't-diamond';
+  if(o>=72) return't-ruby';
+  if(o>=64) return't-sapphire';
+  if(o>=56) return't-emerald';
+  if(o>=46) return't-gold';
+  if(o>=35) return't-silver';
+  if(o>=22) return't-bronze';
+  return't-iron';
+}
 function hasHatTrick(playerId){
   return db.matches.some(m=>m.goles&&(m.goles[playerId]||0)>=3);
 }
@@ -995,7 +1042,7 @@ function smartScore(p){
 
 function radar(p,sz=110){
   const cx=sz/2,cy=sz/2,r=sz/2-13;
-  const vals=SK.map(s=>((p[s.key]||1)-1)/9);
+  const vals=SK.map(s=>((p[s.key]||10)-10)/90);
   const col=gc(p.id);
   const N=6,ao=-Math.PI/2;
   function pt(i,rad){const a=ao+(2*Math.PI/N)*i;return[cx+rad*Math.cos(a),cy+rad*Math.sin(a)];}
@@ -1044,7 +1091,7 @@ function addPlayer(){
     name:nombre,
     position:pos,
     emoji:randomEmoji(),
-    vel:5, tec:5, def:5, tir:5, sta:5, fis:5,
+    vel:50, tec:50, def:50, tir:50, sta:50, fis:50,
     history:{matches:0,wins:0,losses:0,draws:0,mvps:0}
   };
   db.players.push(p);
@@ -1079,17 +1126,53 @@ function renderList(){
   }
   const grid=document.createElement('div');
   grid.className='fifa-grid';
+  // Calcular logros para marcos y badges
+  const rankingOrdenado=[...db.players]
+    .filter(p=>p.history.matches>0)
+    .sort((a,b)=>rankScore(b)-rankScore(a));
+  const rank1=rankingOrdenado[0]?.id;
+  const rank2=rankingOrdenado[1]?.id;
+  const rank3=rankingOrdenado[2]?.id;
+  const lastMatch=db.matches[0]||null;
+  const lastMvp=lastMatch?.mvp||null;
+  const lastGk=lastMatch?.goalkeeper||null;
+  const lastGoles=lastMatch?.goles||{};
+  const lastGolId=Object.keys(lastGoles).sort((a,b)=>(lastGoles[b]||0)-(lastGoles[a]||0))[0]||null;
+
+  function getFrame(id){
+    if(id===rank1) return 'frame-rank1';
+    if(id===rank2) return 'frame-rank2';
+    if(id===rank3) return 'frame-rank3';
+    if(id===lastMvp) return 'frame-mvp';
+    if(id===lastGk)  return 'frame-gk';
+    if(id===lastGolId) return 'frame-gol';
+    return '';
+  }
+  function getBadges(id){
+    const b=[];
+    if(id===rank1) b.push('🥇');
+    if(id===rank2) b.push('🥈');
+    if(id===rank3) b.push('🥉');
+    if(id===lastMvp) b.push('⭐MVP');
+    if(id===lastGk)  b.push('🧤');
+    if(id===lastGolId&&lastGoles[id]>0) b.push('⚽×'+lastGoles[id]);
+    return b;
+  }
+
   [...db.players].sort((a,b)=>ov(b)-ov(a)).forEach(p=>{
     const col=gc(p.id), in_=playerAv(p), o=ov(p), t=tier(o), pos=posObj(p.position);
+    const frame=getFrame(p.id);
+    const badges=getBadges(p.id);
     const slot=document.createElement('div');
     slot.className='profile-slot';
     const statsHTML=SK.map(s=>`<div class="fc-stat"><div class="fc-snum">${p[s.key]}</div><div class="fc-slbl">${s.label.slice(0,3).toUpperCase()}</div></div>`).join('');
     const card=document.createElement('div');
-    card.className=`fc ${t}`;
+    card.className=`fc ${t}${frame?' '+frame:''}`;
     card.style.cursor='pointer';
     card.onclick=()=>openPlayerHistory(p.id);
     card.innerHTML=`
       <div class="fc-bg"></div><div class="fc-shine"></div>
+      ${badges.length?`<div class="fc-badges">${badges.map(b=>`<span class="fc-badge">${b}</span>`).join('')}</div>`:''}
       <div class="fc-in">
         <div class="fc-top">
           <div><div class="fc-ov">${o}</div><div class="fc-pos">${pos.short}</div></div>
@@ -1149,7 +1232,7 @@ function renderStats(){
       ${SK.map(s=>`<div class="sr"><div class="sh">
         <div class="slw"><span class="sem">${s.emoji}</span><div><div class="sn">${s.label}</div><div class="sd">${s.desc}</div></div></div>
         <div class="sv" id="sv-${p.id}-${s.key}" style="color:${s.color}">${p[s.key]}</div>
-      </div><input type="range" min="1" max="10" value="${p[s.key]}" class="${s.cls}" oninput="updStat('${p.id}','${s.key}',this.value)"></div>`).join('')}
+      </div><input type="range" min="10" max="100" step="1" value="${p[s.key]}" class="${s.cls}" oninput="updStat('${p.id}','${s.key}',this.value)"></div>`).join('')}
     </div>`:'';
 
     return`<div class="card" style="${open?'border-color:var(--border2)':''}">
@@ -1324,7 +1407,7 @@ function radarTeam(players, sz=120){
   const avg={};
   SK.forEach(s=>{ avg[s.key]=players.reduce((sum,p)=>sum+(p[s.key]||0),0)/players.length; });
   const cx=sz/2,cy=sz/2,r=sz/2-14;
-  const vals=SK.map(s=>((avg[s.key]||1)-1)/9);
+  const vals=SK.map(s=>((avg[s.key]||10)-10)/90);
   // use a blended colour (white-ish)
   const col='rgba(255,255,255,0.85)';
   const N=6,ao=-Math.PI/2;
@@ -1469,9 +1552,30 @@ function saveMatch(){
     teamB:B.map(p=>({id:p.id,name:p.name,position:p.position,score:+p.score.toFixed(2)})),
   };
 
+  // Snapshot del ranking ANTES del nuevo partido
+  const _prevRankSnap=[...db.players]
+    .filter(p=>p.history.matches>0)
+    .sort((a,b)=>rankScore(b)-rankScore(a)||b.history.wins-a.history.wins)
+    .map((p,i)=>({id:p.id,rank:i+1}));
+  const _prevMap=Object.fromEntries(_prevRankSnap.map(x=>[x.id,x.rank]));
+
   db.matches.unshift(match);
   aplicarEvolucionStats(match);
   recalcAllStats();
+
+  // Calcular cambio de posición y racha tras el partido
+  [...db.players]
+    .filter(p=>p.history.matches>0)
+    .sort((a,b)=>rankScore(b)-rankScore(a)||b.history.wins-a.history.wins)
+    .forEach((p,i)=>{
+      const newRank=i+1;
+      const prevRank=_prevMap[p.id]??null;
+      const rd=p.rankData||{streak:0,change:0,prevRank:null};
+      rd.change = prevRank!==null ? prevRank-newRank : 0; // + subió, - bajó
+      rd.streak = prevRank!==null && newRank<=prevRank ? (rd.streak||0)+1 : 0;
+      rd.prevRank=prevRank;
+      p.rankData=rd;
+    });
 
   save();
   renderList();
@@ -1508,6 +1612,46 @@ function recalcAllStats(){
   });
 }
 
+function exportarBackup(){
+  if(!isAdmin()){snack('🔒 Solo admin');return;}
+  const data={data:{players:db.players,matches:db.matches,cancha:db.cancha,convocatoria:db.convocatoria,premios:db.premios}};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='balancedfc_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  snack('✅ Backup exportado');
+}
+
+function importarBackup(input){
+  if(!isAdmin()){snack('🔒 Solo admin');return;}
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const parsed=JSON.parse(e.target.result);
+      const d=parsed.data||parsed;
+      showModal('⬆️','¿Restaurar backup?',
+        `Se sobreescribirá todo en Firebase con los datos del archivo "${file.name}". Esta acción no se puede deshacer.`,
+        'Restaurar',
+        ()=>{
+          db.players      = d.players      || [];
+          db.matches       = d.matches       || [];
+          db.cancha        = d.cancha        || {};
+          db.convocatoria  = d.convocatoria  || {activa:false,inscripciones:[]};
+          db.premios       = d.premios       || {};
+          save();
+          snack('✅ Backup restaurado en Firebase');
+        }
+      );
+    } catch(err){
+      snack('❌ Archivo inválido');
+    }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
 function confirmarRecalc(){
   showModal('🔄','¿Recalcular evolución de stats?',
     'Se reprocessarán todos los partidos en orden cronológico con el sistema nuevo. Los stats actuales se reemplazarán.',
@@ -1530,6 +1674,9 @@ function recalcEvolucionStats(){
           if(oldest.before[k]!=null) p[k]=oldest.before[k];
         });
       }
+    } else {
+      // Sin historial: arrancar desde 50 (base nueva escala)
+      ['vel','tec','def','tir','sta'].forEach(k=>{ p[k]=50; });
     }
     p.statHistory=[];
   });
@@ -1682,26 +1829,62 @@ function renderHistory(){
   const mostMVP=[...db.players].sort((a,b)=>b.history.mvps-a.history.mvps)[0];
   const topScorer=[...db.players].sort((a,b)=>(b.history.goals||0)-(a.history.goals||0))[0];
 
-  const rankingHTML=`
-    <div class="card">
-      <div class="sec-title">Ranking de jugadores</div>
-      ${ranking.length ? ranking.map((p,i)=>`
-        <div class="rank-row">
+  const BLOCKS=[
+    {label:'BLOQUE A',icon:'👑',color:'#ffd700',bg:'rgba(255,215,0,.06)',border:'rgba(255,215,0,.25)'},
+    {label:'BLOQUE B',icon:'⚡',color:'#00e5ff',bg:'rgba(0,229,255,.04)',border:'rgba(0,229,255,.2)'},
+    {label:'BLOQUE C',icon:'🔥',color:'#ff9100',bg:'rgba(255,145,0,.04)',border:'rgba(255,145,0,.18)'},
+    {label:'ZONA DE RIESGO',icon:'💀',color:'#ff5252',bg:'rgba(255,82,82,.05)',border:'rgba(255,82,82,.25)'},
+  ];
+
+  function blockFor(i){return Math.min(Math.floor(i/4), BLOCKS.length-1);}
+
+  const rankingHTML=`<div style="margin-bottom:12px">
+    ${ranking.length ? (()=>{
+      let html=''; let lastBlock=-1;
+      ranking.forEach((p,i)=>{
+        const bl=blockFor(i);
+        const B=BLOCKS[bl];
+        if(bl!==lastBlock){
+          if(lastBlock>=0) html+=`</div>`;
+          html+=`<div style="border:1px solid ${B.border};border-radius:14px;overflow:hidden;margin-bottom:10px;background:${B.bg}">
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid ${B.border};background:rgba(0,0,0,.2)">
+              <span style="font-size:16px">${B.icon}</span>
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:14px;letter-spacing:2px;color:${B.color}">${B.label}</span>
+              <span style="font-size:10px;color:rgba(255,255,255,.3);margin-left:auto">Puestos ${bl*4+1}–${bl*4+4}</span>
+            </div>`;
+          lastBlock=bl;
+        }
+        const rd=p.rankData||{};
+        const ch=rd.change??0;
+        const streak=rd.streak||0;
+        const chEl = rd.prevRank==null ? '' :
+          ch>0 ? `<span style="color:#00e676;font-weight:700;font-size:11px">▲${ch}</span>` :
+          ch<0 ? `<span style="color:#ff5252;font-weight:700;font-size:11px">▼${Math.abs(ch)}</span>` :
+          `<span style="color:rgba(255,255,255,.3);font-size:11px">─</span>`;
+        const streakEl = streak>=2 ?
+          `<span style="background:rgba(255,145,0,.15);border:1px solid rgba(255,145,0,.3);border-radius:6px;padding:1px 5px;font-size:9px;color:#ff9100;font-weight:700">🔥 ${streak} en racha</span>` : '';
+        html+=`<div class="rank-row" style="border-bottom:1px solid rgba(255,255,255,.05)">
           <div class="rank-left">
-            <div class="rank-pos">${i+1}</div>
-            <div>
-              <div class="rank-name">${p.name} ${playerForm(p.id)}${hasHatTrick(p.id)?' 🎩':''}</div>
-              <div class="rank-sub">${posObj(p.position).emoji} ${posObj(p.position).name} · ${p.history.matches} PJ · ${winRate(p)}% WR · ⚽${p.history.goals||0} (${p.history.matches>0?((p.history.goals||0)/p.history.matches).toFixed(1):0}/PJ)</div>
+            <div class="rank-pos" style="color:${B.color};${bl===0&&i<3?'font-size:20px':''}">${['🥇','🥈','🥉'][i]??i+1}</div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span class="rank-name">${p.name} ${playerForm(p.id)}${hasHatTrick(p.id)?' 🎩':''}</span>
+                ${chEl}
+              </div>
+              <div class="rank-sub">${posObj(p.position).emoji} ${p.history.matches} PJ · ${winRate(p)}% WR · ⚽${p.history.goals||0}</div>
+              ${streakEl}
             </div>
           </div>
           <div class="rank-right">
-            <div class="rank-main" style="color:var(--accent)">${Math.round(rankScore(p))}</div>
+            <div class="rank-main" style="color:${B.color}">${Math.round(rankScore(p))}</div>
             <div class="rank-mini">${rankCriteria(p)}</div>
           </div>
-        </div>
-      `).join('') : `<div class="empty-text">Aún no hay suficientes datos para ranking.</div>`}
-    </div>
-  `;
+        </div>`;
+      });
+      html+='</div>';
+      return html;
+    })() : `<div class="card"><div class="empty-text" style="padding:16px">Aún no hay suficientes datos.</div></div>`}
+  </div>`;
 
   sumEl.innerHTML=`
     ${rankingHTML}
@@ -1820,10 +2003,11 @@ _doc.onSnapshot(snap => {
   hideSplash();
   let _emojiChanged=false;
   db.players.forEach(p => {
-    SK.forEach(s => { if(p[s.key]==null) p[s.key]=5; });
+    SK.forEach(s => { if(p[s.key]==null) p[s.key]=50; });
     if(!p.position) p.position='MID';
     if(!p.history)  p.history={matches:0,wins:0,losses:0,draws:0,mvps:0};
     if(!p.statHistory) p.statHistory=[];
+    if(!p.rankData) p.rankData={streak:0,change:0,prevRank:null};
     if(!p.emoji){p.emoji=randomEmoji();_emojiChanged=true;}
   });
   if(_emojiChanged) save();
@@ -2722,7 +2906,7 @@ function saveCancha(){
 
 // ── EVOLUCIÓN DE STATS ────────────────────────────────────────
 function aplicarEvolucionStats(match){
-  const clamp=(v)=>Math.min(10, Math.max(1, Math.round(v*10)/10));
+  const clamp=(v)=>Math.min(100, Math.max(10, Math.round(v*10)/10));
 
   // Racha actual de un jugador (db.matches ya incluye el partido actual)
   const getStreak=(playerId)=>{
@@ -2768,49 +2952,49 @@ function aplicarEvolucionStats(match){
 
     // ⚽ Goles → tir
     if(goles>0){
-      cambios.tir += goles * 0.10;
-      if(goles>=3) cambios.tir += 0.20; // hat-trick bonus
+      cambios.tir += goles * 1.0;
+      if(goles>=3) cambios.tir += 2.0; // hat-trick bonus
     }
 
     // ⭐ MVP → tec
-    if(match.mvp===playerId) cambios.tec += 0.15;
+    if(match.mvp===playerId) cambios.tec += 1.5;
 
     // 💪 Resultado base → sta
-    if(res==='gano')   cambios.sta += 0.05;
-    else if(res==='perdio') cambios.sta -= 0.05;
+    if(res==='gano')   cambios.sta += 0.5;
+    else if(res==='perdio') cambios.sta -= 0.5;
 
     // 🛡️ Defensa según margen (todos, incluye delanteros)
     if(res==='empato'){
-      cambios.def += 0.08;
+      cambios.def += 0.8;
     } else if(res==='gano'){
-      if(margin===1) cambios.def += 0.05; // ganar raspando
+      if(margin===1) cambios.def += 0.5; // ganar raspando
     } else { // perdio
       const lost = Math.abs(margin);
-      if     (lost===1)          cambios.def += 0.10; // aguantaron bien
-      else if(lost===2)          cambios.def += 0.05; // pelearon
-      else if(lost>=3&&lost<=4)  cambios.def -= 0.10; // paliza
-      else if(lost>=5){          cambios.def -= 0.15; cambios.sta -= 0.15; } // desastre
+      if     (lost===1)          cambios.def += 1.0; // aguantaron bien
+      else if(lost===2)          cambios.def += 0.5; // pelearon
+      else if(lost>=3&&lost<=4)  cambios.def -= 1.0; // paliza
+      else if(lost>=5){          cambios.def -= 1.5; cambios.sta -= 1.5; } // desastre
     }
 
     // 🧤 Arquero del partido
     if(match.goalkeeper===playerId){
-      cambios.def += 0.15;
-      if(rivScore>=4) cambios.def -= 0.10; // recibió 4+ goles
+      cambios.def += 1.5;
+      if(rivScore>=4) cambios.def -= 1.0; // recibió 4+ goles
     }
 
     // ⚡ Racha 3 victorias → vel; racha 3 derrotas → sta (resetea con 1 victoria)
     const {streak, result}=getStreak(playerId);
-    if(streak>=3&&result==='W') cambios.vel += 0.10;
-    if(streak>=3&&result==='L') cambios.sta -= 0.08;
+    if(streak>=3&&result==='W') cambios.vel += 1.0;
+    if(streak>=3&&result==='L') cambios.sta -= 0.8;
 
     // 📉 0 goles en últimos 5 PJ solo FWD/WNG → tir
     if(p.position==='FWD'||p.position==='WNG'){
       const ult=golesUltimos(playerId, 5);
-      if(ult.pj>=5&&ult.goals===0) cambios.tir -= 0.08;
+      if(ult.pj>=5&&ult.goals===0) cambios.tir -= 0.8;
     }
 
     // 📉 10+ PJ sin ningún MVP → tec
-    if((p.history.matches||0)>=10&&(p.history.mvps||0)===0) cambios.tec -= 0.05;
+    if((p.history.matches||0)>=10&&(p.history.mvps||0)===0) cambios.tec -= 0.5;
 
     // Guardar snapshot
     if(!p.statHistory) p.statHistory=[];
@@ -2820,8 +3004,8 @@ function aplicarEvolucionStats(match){
     // Aplicar — rendimientos decrecientes al subir (caer aplica al 100%)
     for(const k in cambios){
       if(cambios[k]===0) continue;
-      const cur=p[k]||5;
-      const factor=cambios[k]>0 ? Math.max(0.05, 1-Math.pow((cur-1)/9, 1.8)) : 1;
+      const cur=p[k]||50;
+      const factor=cambios[k]>0 ? Math.max(0.05, 1-Math.pow((cur-10)/90, 1.8)) : 1;
       p[k]=clamp(cur+cambios[k]*factor);
     }
     snapshot.after={vel:p.vel,tec:p.tec,def:p.def,tir:p.tir,sta:p.sta};
@@ -2882,16 +3066,16 @@ function openPlayerHistory(id){
   const _n=CHART_STATS.length, _cx=120, _cy=110, _r=76;
   const _ang=i=>(i/_n)*2*Math.PI-Math.PI/2;
 
-  const _grids=[2,4,6,8,10].map(v=>{
-    const pts=CHART_STATS.map((_,i)=>{const a=_ang(i),rr=_r*(v/10);return `${_cx+rr*Math.cos(a)},${_cy+rr*Math.sin(a)}`;}).join(' ');
+  const _grids=[20,40,60,80,100].map(v=>{
+    const pts=CHART_STATS.map((_,i)=>{const a=_ang(i),rr=_r*(v/100);return `${_cx+rr*Math.cos(a)},${_cy+rr*Math.sin(a)}`;}).join(' ');
     return `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
   }).join('');
   const _axes=CHART_STATS.map((_,i)=>{const a=_ang(i);return `<line x1="${_cx}" y1="${_cy}" x2="${(_cx+_r*Math.cos(a)).toFixed(1)}" y2="${(_cy+_r*Math.sin(a)).toFixed(1)}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>`;}).join('');
-  const _polyPts=CHART_STATS.map((s,i)=>{const a=_ang(i),v=(p[s.key]||5)/10;return `${(_cx+_r*v*Math.cos(a)).toFixed(1)},${(_cy+_r*v*Math.sin(a)).toFixed(1)}`;}).join(' ');
+  const _polyPts=CHART_STATS.map((s,i)=>{const a=_ang(i),v=(p[s.key]||50)/100;return `${(_cx+_r*v*Math.cos(a)).toFixed(1)},${(_cy+_r*v*Math.sin(a)).toFixed(1)}`;}).join(' ');
   const _labels=CHART_STATS.map((s,i)=>{
     const a=_ang(i),lr=_r+26,x=(_cx+lr*Math.cos(a)).toFixed(1),y=(_cy+lr*Math.sin(a)).toFixed(1);
     return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="15">${s.emoji}</text>
-    <text x="${x}" y="${(parseFloat(y)+13).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="${s.hex}" font-weight="700">${(p[s.key]||5).toFixed(1)}</text>`;
+    <text x="${x}" y="${(parseFloat(y)+13).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="${s.hex}" font-weight="700">${Math.round(p[s.key]||50)}</text>`;
   }).join('');
   const _radarSVG=`<svg width="240" height="222" style="display:block;margin:0 auto;overflow:visible">
     ${_grids}${_axes}
@@ -2901,15 +3085,15 @@ function openPlayerHistory(id){
 
   const _hist=[...(p.statHistory||[])].reverse();
   const _bars=CHART_STATS.map(s=>{
-    const val=p[s.key]||5;
-    const pct=(val/10)*100;
+    const val=p[s.key]||50;
+    const pct=val; // ya es 10-100
     const sparkVals=_hist.map(sh=>sh.after&&sh.after[s.key]!=null?sh.after[s.key]:val);
     let sparkSVG='';
     if(sparkVals.length>=2){
       const sw=54,sh=20;
-      const minV=Math.max(1,Math.min(...sparkVals)-0.3);
-      const maxV=Math.min(10,Math.max(...sparkVals)+0.3);
-      const rng=maxV-minV||0.1;
+      const minV=Math.max(10,Math.min(...sparkVals)-3);
+      const maxV=Math.min(100,Math.max(...sparkVals)+3);
+      const rng=maxV-minV||1;
       const spkPts=sparkVals.map((v,i)=>`${(i/(sparkVals.length-1)*sw).toFixed(1)},${(sh-((v-minV)/rng)*(sh-3)-1.5).toFixed(1)}`).join(' ');
       const lx=(sparkVals.length>1?sw:0).toFixed(1);
       const ly=(sh-((sparkVals[sparkVals.length-1]-minV)/rng)*(sh-3)-1.5).toFixed(1);
@@ -2919,15 +3103,15 @@ function openPlayerHistory(id){
       </svg>`;
     }
     const trend=_hist.length>=2?(_hist[_hist.length-1].after[s.key]||val)-(_hist[0].after[s.key]||val):0;
-    const trendEl=trend>0.04?`<span style="color:#00e676;font-size:10px;font-weight:700;min-width:28px">▲${trend.toFixed(1)}</span>`:
-                  trend<-0.04?`<span style="color:#ff5252;font-size:10px;font-weight:700;min-width:28px">▼${Math.abs(trend).toFixed(1)}</span>`:
+    const trendEl=trend>0.4?`<span style="color:#00e676;font-size:10px;font-weight:700;min-width:28px">▲${Math.round(trend)}</span>`:
+                  trend<-0.4?`<span style="color:#ff5252;font-size:10px;font-weight:700;min-width:28px">▼${Math.round(Math.abs(trend))}</span>`:
                   `<span style="color:rgba(255,255,255,0.2);font-size:10px;min-width:28px">─</span>`;
     return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <span style="font-size:14px;width:18px;text-align:center;flex-shrink:0">${s.emoji}</span>
       <div style="flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden">
         <div style="height:100%;width:${pct.toFixed(1)}%;background:${s.css};border-radius:3px"></div>
       </div>
-      <span style="font-size:12px;font-weight:700;color:${s.css};width:26px;text-align:right">${val.toFixed(1)}</span>
+      <span style="font-size:12px;font-weight:700;color:${s.css};width:26px;text-align:right">${Math.round(val)}</span>
       ${trendEl}
       ${sparkSVG||`<div style="width:54px;flex-shrink:0"></div>`}
     </div>`;
