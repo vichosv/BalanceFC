@@ -1168,7 +1168,7 @@ function renderList(){
         <div class="fc-stats">${statsHTML}</div>
         <div class="fc-mini">
           ${p.history.matches} PJ · ${p.history.wins} V · ${winRate(p)}% WR<br>
-          ⚽ ${p.history.goals||0} goles · MVP x${p.history.mvps}${hasHatTrick(p.id)?' · 🎩':''}
+          ⚽ ${p.history.goals||0} · 🅰️ ${p.history.assists||0} · MVP x${p.history.mvps}${hasHatTrick(p.id)?' · 🎩':''}
         </div>
       </div>`;
     slot.appendChild(card);
@@ -1534,10 +1534,14 @@ function renderLogear(){
         </div>
       </div>
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
-        <input type="checkbox" id="chk-goles-l" onchange="toggleGolesPanelL()" style="width:16px;height:16px;accent-color:var(--accent);flex:none" ${golesVisible?'checked':''}> Registrar goles por jugador
+        <input type="checkbox" id="chk-goles-l" onchange="toggleGolesPanelL()" style="width:16px;height:16px;accent-color:var(--accent);flex:none" ${golesVisible?'checked':''}> Registrar goles y asistencias
       </label>
       <div id="goles-panel-l" style="display:${golesVisible?'block':'none'};margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Deja en 0 si no anotó.</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">
+          <span style="flex:1;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Jugador</span>
+          <span style="width:110px;text-align:center;font-size:11px;font-weight:700;color:var(--yellow);letter-spacing:.5px">⚽ GOLES</span>
+          <span style="width:110px;text-align:center;font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.5px">🅰️ ASIST</span>
+        </div>
         <div id="goles-inputs-l"></div>
       </div>
       <button class="btn btn-ac btn-full" style="margin-top:14px" onclick="saveMatchL()">💾 Guardar partido</button>
@@ -1555,14 +1559,59 @@ function toggleGolesPanelL(){
   if(show) buildGolesInputsL([...lT.A,...lT.B]);
 }
 
+function stepGolL(id, delta){
+  const el=document.getElementById('gol-val-l-'+id);
+  if(!el) return;
+  const cur=parseInt(el.dataset.val)||0;
+  const next=Math.max(0, cur+delta);
+  el.dataset.val=next;
+  el.textContent=next;
+  el.style.color=next>0?'var(--yellow)':'var(--accent)';
+  recalcTeamGoalsL();
+}
+
+function stepAsiL(id, delta){
+  const el=document.getElementById('asi-val-l-'+id);
+  if(!el) return;
+  const cur=parseInt(el.dataset.val)||0;
+  const next=Math.max(0, cur+delta);
+  el.dataset.val=next;
+  el.textContent=next;
+  el.style.color=next>0?'var(--accent)':'var(--accent)';
+}
+
+function recalcTeamGoalsL(){
+  if(!document.getElementById('chk-goles-l')?.checked) return;
+  let sA=0,sB=0;
+  lT.A?.forEach(p=>{sA+=parseInt(document.getElementById('gol-val-l-'+p.id)?.dataset.val||0);});
+  lT.B?.forEach(p=>{sB+=parseInt(document.getElementById('gol-val-l-'+p.id)?.dataset.val||0);});
+  const sa=document.getElementById('score-a');
+  const sb=document.getElementById('score-b');
+  if(sa) sa.value=sA;
+  if(sb) sb.value=sB;
+}
+
 function buildGolesInputsL(everyone){
   const cont=document.getElementById('goles-inputs-l');
   if(!cont) return;
+  const stepper=(valId,onStep)=>`
+    <div style="display:flex;align-items:center;border:1px solid var(--border2);border-radius:10px;overflow:hidden;flex:none;width:110px">
+      <button type="button" onclick="${onStep}(-1)"
+        style="background:var(--surface2);border:none;color:var(--text);width:34px;height:36px;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex:none"
+        onmouseover="this.style.background='var(--border2)'" onmouseout="this.style.background='var(--surface2)'">−</button>
+      <div id="${valId}" data-val="0"
+        style="flex:1;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;background:var(--surface);color:var(--accent);line-height:36px;min-width:32px">0</div>
+      <button type="button" onclick="${onStep}(1)"
+        style="background:var(--surface2);border:none;color:var(--text);width:34px;height:36px;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex:none"
+        onmouseover="this.style.background='var(--border2)'" onmouseout="this.style.background='var(--surface2)'">+</button>
+    </div>`;
   cont.innerHTML=everyone.map(p=>`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <span style="flex:1;font-size:13px;font-weight:600">${p.name}</span>
-      <input type="number" id="gol-${p.id}-l" min="0" value="0"
-        style="width:64px;text-align:center">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+        ${p.name} <span style="opacity:.5;font-size:11px">${posObj(p.position).emoji}</span>
+      </div>
+      ${stepper('gol-val-l-'+p.id, `stepGolL('${p.id}',`)}
+      ${stepper('asi-val-l-'+p.id, `stepAsiL('${p.id}',`)}
     </div>`).join('');
 }
 
@@ -1577,14 +1626,17 @@ function saveMatchL(){
   const goalkeeper=document.getElementById('gk-select-l').value||'';
   const format=document.getElementById('match-format')?.value||'Libre';
 
-  // Collect goles from logear inputs
+  // Collect goles & asistencias from logear steppers
   const everyone=[...A,...B];
   const golesMap={};
+  const asistMap={};
   const golesPanel=document.getElementById('goles-panel-l');
   if(golesPanel?.style.display==='block'){
     everyone.forEach(p=>{
-      const val=parseInt(document.getElementById('gol-'+p.id+'-l')?.value||0);
-      if(val>0) golesMap[p.id]=val;
+      const g=parseInt(document.getElementById('gol-val-l-'+p.id)?.dataset.val||0);
+      const a=parseInt(document.getElementById('asi-val-l-'+p.id)?.dataset.val||0);
+      if(g>0) golesMap[p.id]=g;
+      if(a>0) asistMap[p.id]=a;
     });
   }
 
@@ -1600,6 +1652,7 @@ function saveMatchL(){
     mvp,
     goalkeeper,
     goles: golesMap,
+    asistencias: asistMap,
     teamA:A.map(p=>({id:p.id,name:p.name,position:p.position,score:+p.score.toFixed(2)})),
     teamB:B.map(p=>({id:p.id,name:p.name,position:p.position,score:+p.score.toFixed(2)})),
   };
@@ -1704,7 +1757,7 @@ function saveMatch(){
 
 function recalcAllStats(){
   db.players.forEach(p=>{
-    p.history={matches:0,wins:0,losses:0,draws:0,mvps:0,goals:0,goalDiff:0};
+    p.history={matches:0,wins:0,losses:0,draws:0,mvps:0,goals:0,assists:0,goalDiff:0};
   });
 
   db.matches.forEach(m=>{
@@ -1722,6 +1775,7 @@ function recalcAllStats(){
 
         if(m.mvp===p.id) p.history.mvps++;
         if(m.goles && m.goles[p.id]) p.history.goals=(p.history.goals||0)+m.goles[p.id];
+        if(m.asistencias && m.asistencias[p.id]) p.history.assists=(p.history.assists||0)+m.asistencias[p.id];
         // goal difference: goals scored by team minus goals conceded
         if(idsA.has(p.id)){ p.history.goalDiff=(p.history.goalDiff||0)+(m.scoreA-m.scoreB); }
         else if(idsB.has(p.id)){ p.history.goalDiff=(p.history.goalDiff||0)+(m.scoreB-m.scoreA); }
@@ -2002,7 +2056,7 @@ function renderHistory(){
                 <span class="rank-name">${p.name} ${playerForm(p.id)}${hasHatTrick(p.id)?' 🎩':''}</span>
                 ${chEl}
               </div>
-              <div class="rank-sub">${posObj(p.position).emoji} ${p.history.matches} PJ · ${winRate(p)}% WR · ⚽${p.history.goals||0}</div>
+              <div class="rank-sub">${posObj(p.position).emoji} ${p.history.matches} PJ · ${winRate(p)}% WR · ⚽${p.history.goals||0} · 🅰️${p.history.assists||0}</div>
               ${streakEl}
             </div>
           </div>
@@ -2052,14 +2106,14 @@ function renderHistory(){
           <div class="hist-team">
             <h4 style="color:var(--green)">⚽ Equipo A · Prom ${m.avgA}</h4>
             <ul>
-              ${m.teamA.map(p=>`<li>${posObj(p.position).emoji} ${p.name} <span style="opacity:.6">(${p.score})</span>${m.goles&&m.goles[p.id]?` <span style="color:var(--yellow);font-weight:700">⚽${m.goles[p.id]}</span>`:''}</li>`).join('')}
+              ${m.teamA.map(p=>`<li>${posObj(p.position).emoji} ${p.name} <span style="opacity:.6">(${p.score})</span>${m.goles&&m.goles[p.id]?` <span style="color:var(--yellow);font-weight:700">⚽${m.goles[p.id]}</span>`:''}${m.asistencias&&m.asistencias[p.id]?` <span style="color:var(--accent);font-weight:700">🅰️${m.asistencias[p.id]}</span>`:''}</li>`).join('')}
             </ul>
           </div>
 
           <div class="hist-team">
             <h4 style="color:var(--blue)">⚽ Equipo B · Prom ${m.avgB}</h4>
             <ul>
-              ${m.teamB.map(p=>`<li>${posObj(p.position).emoji} ${p.name} <span style="opacity:.6">(${p.score})</span>${m.goles&&m.goles[p.id]?` <span style="color:var(--yellow);font-weight:700">⚽${m.goles[p.id]}</span>`:''}</li>`).join('')}
+              ${m.teamB.map(p=>`<li>${posObj(p.position).emoji} ${p.name} <span style="opacity:.6">(${p.score})</span>${m.goles&&m.goles[p.id]?` <span style="color:var(--yellow);font-weight:700">⚽${m.goles[p.id]}</span>`:''}${m.asistencias&&m.asistencias[p.id]?` <span style="color:var(--accent);font-weight:700">🅰️${m.asistencias[p.id]}</span>`:''}</li>`).join('')}
             </ul>
           </div>
         </div>
@@ -3074,7 +3128,8 @@ function aplicarEvolucionStats(match){
     const p=db.players.find(pl=>pl.id===playerId);
     if(!p) return;
 
-    const goles    = (match.goles&&match.goles[playerId])||0;
+    const goles      = (match.goles&&match.goles[playerId])||0;
+    const asistencias= (match.asistencias&&match.asistencias[playerId])||0;
     const myScore  = teamKey==='A' ? match.scoreA : match.scoreB;
     const rivScore = teamKey==='A' ? match.scoreB : match.scoreA;
     const margin   = myScore - rivScore; // + ganó, - perdió, 0 empató
@@ -3086,6 +3141,9 @@ function aplicarEvolucionStats(match){
       cambios.tir += goles * 1.0;
       if(goles>=3) cambios.tir += 2.0; // hat-trick bonus
     }
+
+    // 🅰️ Asistencias → tec
+    if(asistencias>0) cambios.tec += asistencias * 0.8;
 
     // ⭐ MVP → tec
     if(match.mvp===playerId) cambios.tec += 1.5;
@@ -3160,6 +3218,7 @@ function openPlayerHistory(id){
       <div class="ph-stat"><div class="ph-stat-val" style="color:var(--muted)">${p.history.matches}</div><div class="ph-stat-lbl">PJ</div></div>
       <div class="ph-stat"><div class="ph-stat-val" style="color:var(--yellow)">${winRate(p)}%</div><div class="ph-stat-lbl">Winrate</div></div>
       <div class="ph-stat"><div class="ph-stat-val" style="color:var(--yellow)">${p.history.goals||0}</div><div class="ph-stat-lbl">Goles</div></div>
+      <div class="ph-stat"><div class="ph-stat-val" style="color:var(--accent)">${p.history.assists||0}</div><div class="ph-stat-lbl">Asistencias</div></div>
       <div class="ph-stat"><div class="ph-stat-val" style="color:${gd>=0?'var(--green)':'var(--red)'}">${gd>=0?'+':''}${gd}</div><div class="ph-stat-lbl">Dif. Goles</div></div>
     </div>`;
   const rankBadgeColor=p.position==='FWD'||p.position==='WNG'?'var(--yellow)':p.position==='GK'||p.position==='DEF'?'var(--blue)':'var(--accent)';
@@ -3176,12 +3235,13 @@ function openPlayerHistory(id){
     const myScore=inA?m.scoreA:m.scoreB;
     const rivalScore=inA?m.scoreB:m.scoreA;
     const myGoals=m.goles&&m.goles[id]?` ⚽${m.goles[id]}${m.goles[id]>=3?' 🎩':''}`:'';
+    const myAsists=m.asistencias&&m.asistencias[id]?` 🅰️${m.asistencias[id]}`:'';
     const mvpTag=m.mvp===id?' ⭐MVP':'';
     return`<div class="ph-match">
       <div class="ph-match-res ${resCls}">${resLabel}</div>
       <div class="ph-match-info">
         <div class="ph-match-date">${fmtDate(m.date)} · ${m.format}</div>
-        <div class="ph-match-detail">vs ${rivals.map(x=>x.name).join(', ').slice(0,38)}${myGoals}${mvpTag}</div>
+        <div class="ph-match-detail">vs ${rivals.map(x=>x.name).join(', ').slice(0,38)}${myGoals}${myAsists}${mvpTag}</div>
       </div>
       <div class="ph-match-score" style="color:${won?'var(--green)':drew?'var(--yellow)':'var(--red)'}">${myScore}–${rivalScore}</div>
     </div>`;
