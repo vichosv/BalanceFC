@@ -2,8 +2,22 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>BalancedFC — FUT de Barrio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>BalanceFC</title>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json" />
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="BalanceFC" />
+<link rel="apple-touch-icon" href="icon.svg" />
+
+<!-- Theme -->
+<meta name="theme-color" content="#080c10" />
+<meta name="description" content="FUT de barrio — balance de equipos y estadísticas" />
+
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -3356,6 +3370,14 @@ function openPlayerHistory(id){
   o2.onclick=(e)=>{ if(e.target===o2) o2.remove(); };
 }
 
+// ── SERVICE WORKER REGISTRATION ──────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(r=>console.log('SW registrado:', r.scope))
+      .catch(e=>console.warn('SW error:', e));
+  });
+}
 </script>
 </body>
 </html>
