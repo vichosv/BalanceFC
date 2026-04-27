@@ -609,7 +609,7 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 
   <div class="section" id="sec-partido">
     <div class="sec-title">Armar partido</div>
-    <div class="itip">Selecciona quién juega y genera equipos. <strong>Compartir por WhatsApp es libre</strong> — solo el admin puede guardar el resultado.</div>
+    <div class="itip">Selecciona quién juega y genera equipos. Compartir por WhatsApp es libre para todos.</div>
 
     <div class="card">
       <div class="grid-2">
@@ -671,10 +671,13 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
           Compartir
         </button>
       </div>
-      <div id="resultado-section"></div>
     </div>
   </div>
 
+  <div class="section" id="sec-logear">
+    <div class="sec-title">📝 Logear partido</div>
+    <div id="logear-view"></div>
+  </div>
 
   <div class="section" id="sec-conv">
     <div class="sec-title">Convocatoria</div>
@@ -702,6 +705,7 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
   <button class="nav-btn" onclick="gotoTab('jugadores',this)"><span class="ni">👥</span>Plantel</button>
   <button class="nav-btn" onclick="gotoTab('stats',this)" id="nav-stats" data-admin="true"><span class="ni">📊</span>Stats</button>
   <button class="nav-btn" onclick="gotoTab('partido',this)" id="nav-partido"><span class="ni">⚽</span>Partido</button>
+  <button class="nav-btn" onclick="gotoTab('logear',this)" id="nav-logear" data-admin="true"><span class="ni">📝</span>Logear</button>
   <button class="nav-btn" onclick="gotoTab('conv',this)" id="nav-conv"><span class="ni">📋</span>Lista</button>
   <button class="nav-btn" onclick="gotoTab('premios',this)" id="nav-premios" data-admin="true"><span class="ni">🎖️</span>Premios</button>
   <button class="nav-btn" onclick="gotoTab('historial',this)"><span class="ni">🏆</span>Historial</button>
@@ -794,7 +798,7 @@ function updateAdminBadge(){
   // Si estaba en una tab admin y se cierra sesión, volver a jugadores
   if(!adminUnlocked){
     const active=document.querySelector('.section.active');
-    if(active && (active.id==='sec-stats'||active.id==='sec-premios')){
+    if(active && (active.id==='sec-stats'||active.id==='sec-premios'||active.id==='sec-logear')){
       const jugBtn=document.querySelector('.nav-btn');
       gotoTab('jugadores', jugBtn);
     }
@@ -1031,7 +1035,7 @@ function radar(p,sz=110){
 }
 
 function gotoTab(tab,btn){
-  if((tab==='stats'||tab==='premios')&&!adminUnlocked){
+  if((tab==='stats'||tab==='premios'||tab==='logear')&&!adminUnlocked){
     snack('🔒 Solo disponible en modo admin'); return;
   }
   if(tab!=='home'&&_homeTimer){clearInterval(_homeTimer);_homeTimer=null;}
@@ -1047,6 +1051,7 @@ function gotoTab(tab,btn){
   if(tab==='cancha') renderCancha();
   if(tab==='conv') renderConv();
   if(tab==='premios') renderPremios();
+  if(tab==='logear') renderLogear();
 }
 
 function addPlayer(){
@@ -1340,6 +1345,7 @@ function genTeams(){
   renderTeams();
   document.getElementById('teams-res').style.display='block';
   document.getElementById('teams-res').scrollIntoView({behavior:'smooth',block:'start'});
+  if(adminUnlocked) snack('✅ Equipos listos — ve a 📝 Logear para guardar el resultado');
 }
 // ── REMIX ──────────────────────────────────────────────────
 function remixTeams(){
@@ -1475,48 +1481,159 @@ function renderTeams(){
     fieldBlock(A,'⚽ Equipo A','var(--green)','A')+
     fieldBlock(B,'⚽ Equipo B','var(--blue)','B');
 
-  // Sección de resultado — solo admin
-  const resSec=document.getElementById('resultado-section');
-  if(resSec){
-    if(adminUnlocked){
-      const everyone=[...A,...B];
-      const prevMvp=document.getElementById('mvp-select')?.value||'';
-      const prevGk=document.getElementById('gk-select')?.value||'';
-      const golesVisible=document.getElementById('goles-panel')?.style.display==='block';
-      resSec.innerHTML=`
-        <div class="card" style="margin-top:4px;border:1px solid rgba(0,229,255,.15)">
-          <div class="sec-title" style="margin-bottom:14px">📝 Registrar resultado</div>
-          <div class="grid-2" style="margin-bottom:10px">
-            <div><label>Goles Equipo A</label><input type="number" id="score-a" min="0" value="0"></div>
-            <div><label>Goles Equipo B</label><input type="number" id="score-b" min="0" value="0"></div>
-          </div>
-          <div class="grid-2" style="margin-bottom:10px">
-            <div><label>⭐ MVP</label>
-              <select id="mvp-select">${everyone.map(p=>`<option value="${p.id}" ${p.id===prevMvp?'selected':''}>${p.name}</option>`).join('')}</select>
-            </div>
-            <div><label>🧤 Arquero</label>
-              <select id="gk-select"><option value="${prevGk===''?'selected':''}">— Ninguno —</option>${everyone.map(p=>`<option value="${p.id}" ${p.id===prevGk?'selected':''}>${p.name}</option>`).join('')}</select>
-            </div>
-          </div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
-            <input type="checkbox" id="chk-goles" onchange="toggleGolesPanel()" style="width:16px;height:16px;accent-color:var(--accent);flex:none" ${golesVisible?'checked':''}> Registrar goles por jugador
-          </label>
-          <div id="goles-panel" style="display:${golesVisible?'block':'none'};margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
-            <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Deja en 0 si no anotó.</div>
-            <div id="goles-inputs"></div>
-          </div>
-          <button class="btn btn-ac btn-full" style="margin-top:14px" onclick="saveMatch()">💾 Guardar partido</button>
-        </div>`;
-      buildGolesInputs(everyone);
-    } else {
-      resSec.innerHTML=`
-        <div style="margin-top:8px;text-align:center;padding:14px;background:var(--surface2);border-radius:12px;border:1px solid var(--border)">
-          <div style="font-size:20px;margin-bottom:4px">🔒</div>
-          <div style="font-size:13px;color:var(--muted)">Solo el admin puede registrar el resultado</div>
-        </div>`;
-    }
-  }
   lT.avgA=aA; lT.avgB=bA;
+}
+
+function renderLogear(){
+  const view=document.getElementById('logear-view');
+  if(!view) return;
+  const {A,B}=lT;
+  if(!A?.length && !B?.length){
+    view.innerHTML=`
+      <div style="text-align:center;padding:48px 20px;color:var(--muted)">
+        <div style="font-size:48px;margin-bottom:12px">⚽</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Sin equipos generados</div>
+        <div style="font-size:13px">Primero genera los equipos en la pestaña <strong>Partido</strong>.</div>
+      </div>`;
+    return;
+  }
+  const everyone=[...A,...B];
+  const golesVisible=document.getElementById('goles-panel-l')?.style.display==='block';
+  const prevMvp=document.getElementById('mvp-select-l')?.value||'';
+  const prevGk=document.getElementById('gk-select-l')?.value||'';
+
+  // Team summary mini
+  const teamLine=(t,label,col)=>`
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:700;color:${col};min-width:76px">${label}</span>
+      ${t.map(p=>`<span style="font-size:11px;background:var(--surface);border:1px solid var(--border);
+        border-radius:6px;padding:2px 7px;">${p.name.split(' ')[0]}</span>`).join('')}
+    </div>`;
+
+  view.innerHTML=`
+    <div class="card" style="border:1px solid rgba(0,229,255,.18);margin-bottom:10px;padding:14px">
+      <div class="sec-title" style="margin-bottom:10px">Equipos del partido</div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        ${teamLine(A,'⚽ Equipo A','var(--green)')}
+        ${teamLine(B,'⚽ Equipo B','var(--blue)')}
+      </div>
+    </div>
+
+    <div class="card" style="border:1px solid rgba(0,229,255,.15)">
+      <div class="sec-title" style="margin-bottom:14px">📋 Registrar resultado</div>
+      <div class="grid-2" style="margin-bottom:10px">
+        <div><label>Goles Equipo A</label><input type="number" id="score-a" min="0" value="0"></div>
+        <div><label>Goles Equipo B</label><input type="number" id="score-b" min="0" value="0"></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:10px">
+        <div><label>⭐ MVP</label>
+          <select id="mvp-select-l">${everyone.map(p=>`<option value="${p.id}" ${p.id===prevMvp?'selected':''}>${p.name}</option>`).join('')}</select>
+        </div>
+        <div><label>🧤 Arquero</label>
+          <select id="gk-select-l"><option value="">— Ninguno —</option>${everyone.map(p=>`<option value="${p.id}" ${p.id===prevGk?'selected':''}>${p.name}</option>`).join('')}</select>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
+        <input type="checkbox" id="chk-goles-l" onchange="toggleGolesPanelL()" style="width:16px;height:16px;accent-color:var(--accent);flex:none" ${golesVisible?'checked':''}> Registrar goles por jugador
+      </label>
+      <div id="goles-panel-l" style="display:${golesVisible?'block':'none'};margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Deja en 0 si no anotó.</div>
+        <div id="goles-inputs-l"></div>
+      </div>
+      <button class="btn btn-ac btn-full" style="margin-top:14px" onclick="saveMatchL()">💾 Guardar partido</button>
+    </div>`;
+
+  if(golesVisible) buildGolesInputsL(everyone);
+}
+
+function toggleGolesPanelL(){
+  const chk=document.getElementById('chk-goles-l');
+  const panel=document.getElementById('goles-panel-l');
+  if(!panel) return;
+  const show=chk.checked;
+  panel.style.display=show?'block':'none';
+  if(show) buildGolesInputsL([...lT.A,...lT.B]);
+}
+
+function buildGolesInputsL(everyone){
+  const cont=document.getElementById('goles-inputs-l');
+  if(!cont) return;
+  cont.innerHTML=everyone.map(p=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="flex:1;font-size:13px;font-weight:600">${p.name}</span>
+      <input type="number" id="gol-${p.id}-l" min="0" value="0"
+        style="width:64px;text-align:center">
+    </div>`).join('');
+}
+
+function saveMatchL(){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
+  const {A,B,avgA,avgB}=lT;
+  if(!A?.length && !B?.length){snack('⚠️ Primero genera los equipos en Partido');return;}
+
+  const scoreA=parseInt(document.getElementById('score-a')?.value||0);
+  const scoreB=parseInt(document.getElementById('score-b')?.value||0);
+  const mvp=document.getElementById('mvp-select-l').value;
+  const goalkeeper=document.getElementById('gk-select-l').value||'';
+  const format=document.getElementById('match-format')?.value||'Libre';
+
+  // Collect goles from logear inputs
+  const everyone=[...A,...B];
+  const golesMap={};
+  const golesPanel=document.getElementById('goles-panel-l');
+  if(golesPanel?.style.display==='block'){
+    everyone.forEach(p=>{
+      const val=parseInt(document.getElementById('gol-'+p.id+'-l')?.value||0);
+      if(val>0) golesMap[p.id]=val;
+    });
+  }
+
+  const match={
+    id:uid(),
+    date:Date.now(),
+    format,
+    avgA:+avgA.toFixed(2),
+    avgB:+avgB.toFixed(2),
+    scoreA,
+    scoreB,
+    winner: scoreA===scoreB ? 'D' : (scoreA>scoreB ? 'A' : 'B'),
+    mvp,
+    goalkeeper,
+    goles: golesMap,
+    teamA:A.map(p=>({id:p.id,name:p.name,position:p.position,score:+p.score.toFixed(2)})),
+    teamB:B.map(p=>({id:p.id,name:p.name,position:p.position,score:+p.score.toFixed(2)})),
+  };
+
+  // Snapshot del ranking ANTES
+  const _prevRankSnap=[...db.players]
+    .filter(p=>p.history.matches>0)
+    .sort((a,b)=>rankScore(b)-rankScore(a)||b.history.wins-a.history.wins)
+    .map((p,i)=>({id:p.id,rank:i+1}));
+  const _prevMap=Object.fromEntries(_prevRankSnap.map(x=>[x.id,x.rank]));
+
+  db.matches.unshift(match);
+  aplicarEvolucionStats(match);
+  recalcAllStats();
+
+  // Calcular cambio de posición y racha
+  [...db.players]
+    .filter(p=>p.history.matches>0)
+    .sort((a,b)=>rankScore(b)-rankScore(a)||b.history.wins-a.history.wins)
+    .forEach((p,i)=>{
+      const newRank=i+1;
+      const prevRank=_prevMap[p.id]??null;
+      const rd=p.rankData||{streak:0,change:0,prevRank:null};
+      rd.change = prevRank!==null ? prevRank-newRank : 0;
+      rd.streak = prevRank!==null && newRank<=prevRank ? (rd.streak||0)+1 : 0;
+      rd.prevRank=prevRank;
+      p.rankData=rd;
+    });
+
+  save();
+  renderList();
+  renderProfiles();
+  renderHistory();
+  snack('🏆 Partido guardado');
 }
 
 function saveMatch(){
