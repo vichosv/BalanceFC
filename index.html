@@ -342,6 +342,10 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 .ba{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),var(--accent));transition:width .8s cubic-bezier(.4,0,.2,1);}
 .bsc{display:flex;justify-content:space-between;margin-top:8px;}
 .bsv{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;}
+.lbtn{background:var(--surface2);border:none;color:var(--text);width:34px;height:36px;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex:none;touch-action:manipulation;}
+.lbtn:hover{background:var(--border2);}
+.lbtn:active{background:var(--border);}
+.lnum{width:36px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;background:var(--surface);color:var(--accent);line-height:36px;user-select:none;}
 
 .itip{
   font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);
@@ -1594,29 +1598,38 @@ function recalcTeamGoalsL(){
 function buildGolesInputsL(everyone){
   const cont=document.getElementById('goles-inputs-l');
   if(!cont) return;
-  const btnStyle=`background:var(--surface2);border:none;color:var(--text);width:34px;height:36px;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex:none`;
-  const wrapStyle=`display:flex;align-items:center;border:1px solid var(--border2);border-radius:10px;overflow:hidden;flex:none;width:108px`;
-  const numStyle=`flex:1;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;background:var(--surface);color:var(--accent);line-height:36px`;
+
+  // Build HTML using data attributes — event listeners attached after, no inline onclick
   cont.innerHTML=everyone.map(p=>`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
       <div style="flex:1;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
         ${p.name} <span style="opacity:.5;font-size:11px">${posObj(p.position).emoji}</span>
       </div>
-      <div style="${wrapStyle}">
-        <button type="button" onclick="stepGolL('${p.id}',-1)" style="${btnStyle}"
-          onmouseover="this.style.background='var(--border2)'" onmouseout="this.style.background='var(--surface2)'">−</button>
-        <div id="gol-val-l-${p.id}" data-val="0" style="${numStyle}">0</div>
-        <button type="button" onclick="stepGolL('${p.id}',1)" style="${btnStyle}"
-          onmouseover="this.style.background='var(--border2)'" onmouseout="this.style.background='var(--surface2)'">+</button>
+      <div style="display:flex;align-items:center;border:1px solid var(--border2);border-radius:10px;overflow:hidden;flex:none">
+        <button class="lbtn" data-pid="${p.id}" data-type="gol" data-delta="-1">−</button>
+        <div id="gol-val-l-${p.id}" data-val="0" class="lnum">0</div>
+        <button class="lbtn" data-pid="${p.id}" data-type="gol" data-delta="1">+</button>
       </div>
-      <div style="${wrapStyle}">
-        <button type="button" onclick="stepAsiL('${p.id}',-1)" style="${btnStyle}"
-          onmouseover="this.style.background='var(--border2)'" onmouseout="this.style.background='var(--surface2)'">−</button>
-        <div id="asi-val-l-${p.id}" data-val="0" style="${numStyle}">0</div>
-        <button type="button" onclick="stepAsiL('${p.id}',1)" style="${btnStyle}"
-          onmouseover="this.style.background='var(--border2)'" onmouseout="this.style.background='var(--surface2)'">+</button>
+      <div style="display:flex;align-items:center;border:1px solid var(--border2);border-radius:10px;overflow:hidden;flex:none">
+        <button class="lbtn" data-pid="${p.id}" data-type="asi" data-delta="-1">−</button>
+        <div id="asi-val-l-${p.id}" data-val="0" class="lnum">0</div>
+        <button class="lbtn" data-pid="${p.id}" data-type="asi" data-delta="1">+</button>
       </div>
     </div>`).join('');
+
+  // Delegated listener — replace old handler by cloning the node
+  const fresh=cont.cloneNode(false);
+  fresh.innerHTML=cont.innerHTML;
+  cont.parentNode.replaceChild(fresh, cont);
+  fresh.addEventListener('click', function(e){
+    const btn=e.target.closest('.lbtn');
+    if(!btn) return;
+    const pid=btn.dataset.pid;
+    const type=btn.dataset.type;
+    const delta=parseInt(btn.dataset.delta);
+    if(type==='gol') stepGolL(pid, delta);
+    else if(type==='asi') stepAsiL(pid, delta);
+  });
 }
 
 function saveMatchL(){
