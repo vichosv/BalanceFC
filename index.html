@@ -237,6 +237,8 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
 }
 .fc:hover{transform:translateY(-5px) scale(1.02);box-shadow:0 18px 44px rgba(0,0,0,.65);}
 .fc-bg{position:absolute;inset:0;z-index:0;}
+.fc-photo{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center top;opacity:.45;mix-blend-mode:luminosity;}
+.fc-photo-overlay{position:absolute;inset:0;z-index:0;background:linear-gradient(to bottom,rgba(0,0,0,.1) 0%,rgba(0,0,0,.5) 65%,rgba(0,0,0,.75) 100%);}
 .fc-shine{
   position:absolute;inset:0;z-index:1;
   background:linear-gradient(135deg,rgba(255,255,255,.1) 0%,transparent 55%,rgba(255,255,255,.04) 100%);
@@ -1166,8 +1168,9 @@ function renderList(){
     card.className=`fc ${t}${frame?' '+frame:''}`;
     card.style.cursor='pointer';
     card.onclick=()=>openPlayerHistory(p.id);
+    const photoLayer=p.photo?`<div class="fc-photo" style="background-image:url(${p.photo})"></div><div class="fc-photo-overlay"></div>`:'';
     card.innerHTML=`
-      <div class="fc-bg"></div><div class="fc-shine"></div>
+      <div class="fc-bg"></div>${photoLayer}<div class="fc-shine"></div>
       <div class="fc-frame-el"></div>
       ${badges.length?`<div class="fc-badges">${badges.map(b=>`<span class="fc-badge">${b}</span>`).join('')}</div>`:''}
       <div class="fc-in">
@@ -1179,7 +1182,7 @@ function renderList(){
               style="background:rgba(255,82,82,0.18);border:1px solid rgba(255,82,82,0.4);border-radius:6px;color:#ff5252;cursor:pointer;padding:2px 5px;font-size:12px;margin-top:3px;line-height:1.4">🗑️</button>
           </div>
         </div>
-        <div class="fc-av" style="background:${col}30;border-color:${col}50;color:${col};font-size:${avFontSize(p,16)}px">${in_}</div>
+        ${p.photo?'<div style="flex:1"></div>':`<div class="fc-av" style="background:${col}30;border-color:${col}50;color:${col};font-size:${avFontSize(p,16)}px">${in_}</div>`}
         <div class="fc-name">${p.name}</div>
         <div class="fc-sub">${pos.name.toUpperCase()} · ${playerForm(p.id)}</div>
         <div class="fc-div"></div>
@@ -1226,6 +1229,14 @@ function renderStats(){
         </div>
       </div>
       <div style="display:flex;justify-content:center;margin-bottom:14px">${radar(p,140)}</div>
+      <div style="margin-bottom:14px;">
+        <label>Foto de carta</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+          ${p.photo?`<img src="${p.photo}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:2px solid var(--border2);">`:''}
+          <button class="btn btn-ac" onclick="triggerPhotoUpload('${p.id}')" style="font-size:13px;padding:6px 12px">📸 ${p.photo?'Cambiar':'Subir foto'}</button>
+          ${p.photo?`<button onclick="removePlayerPhoto('${p.id}')" style="background:rgba(255,82,82,.18);border:1px solid rgba(255,82,82,.4);border-radius:6px;color:#ff5252;cursor:pointer;padding:6px 10px;font-size:13px">🗑️</button>`:''}
+        </div>
+      </div>
       ${SK.map(s=>`<div class="sr"><div class="sh">
         <div class="slw"><span class="sem">${s.emoji}</span><div><div class="sn">${s.label}</div><div class="sd">${s.desc}</div></div></div>
         <div class="sv" id="sv-${p.id}-${s.key}" style="color:${s.color}">${p[s.key]}</div>
@@ -1272,6 +1283,43 @@ function setPosition(id,pos){
   renderProfiles();
   snack(`📍 ${p.name} ahora juega de ${posObj(pos).name}`);
 }
+
+function triggerPhotoUpload(id){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='image/*';
+  inp.onchange=async e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const b64=await resizeImage(file,320);
+    const p=db.players.find(pl=>pl.id===id); if(!p) return;
+    p.photo=b64;
+    save(); renderProfiles(); renderStats();
+    snack('📸 Foto actualizada');
+  };
+  inp.click();
+}
+function removePlayerPhoto(id){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
+  const p=db.players.find(pl=>pl.id===id); if(!p) return;
+  delete p.photo;
+  save(); renderProfiles(); renderStats();
+  snack('🗑️ Foto eliminada');
+}
+function resizeImage(file,maxW){
+  return new Promise(resolve=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      const scale=Math.min(1,maxW/img.width);
+      const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg',.72));
+    };
+    img.src=url;
+  });
+}
+
 
 // renderProfiles → merged into renderList
 function renderProfiles(){ renderList(); }
