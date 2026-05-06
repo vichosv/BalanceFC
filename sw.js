@@ -1,4 +1,4 @@
-const CACHE = 'balancefc-v1';
+const CACHE = 'balancefc-v2';
 
 const PRECACHE = [
   './',
