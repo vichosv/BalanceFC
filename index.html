@@ -641,6 +641,7 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
             <option value="5v5" selected>5 vs 5</option>
             <option value="6v6">6 vs 6</option>
             <option value="7v7">7 vs 7</option>
+            <option value="Triangular">Triangular (6v6v6)</option>
           </select>
         </div>
         <div>
@@ -672,15 +673,7 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.2);}
       <div class="div"></div>
       <div class="sec-title">Resultado</div>
 
-      <div class="bm">
-        <div class="bt"><span>⚽ Equipo A</span><span>⚽ Equipo B</span></div>
-        <div class="btr"><div class="ba" id="bal-fill" style="width:50%"></div></div>
-        <div class="bsc">
-          <div class="bsv" id="sc-a" style="color:var(--green)">—</div>
-          <div style="font-size:11px;color:var(--muted);align-self:flex-end;padding-bottom:4px">PROMEDIO</div>
-          <div class="bsv" id="sc-b" style="color:var(--blue)">—</div>
-        </div>
-      </div>
+      <div class="bm" id="bal-box"></div>
 
       <div class="tw" id="tw"></div>
 
@@ -1377,37 +1370,49 @@ function genTeams(){
   if(selected.length<2){snack('⚠️ Selecciona al menos 2 jugadores');return;}
 
   const mode=document.getElementById('balance-mode').value;
+  const format=document.getElementById('match-format').value;
+  const isTriangular=format==='Triangular';
 
   const byPos={GK:[],DEF:[],MID:[],WNG:[],FWD:[]};
   selected.forEach(p=>{
-    const score = mode==='smart' ? smartScore(p) : avg(p);
-    const clone={...p, score};
-    (byPos[p.position] || byPos.MID).push(clone);
+    const score=mode==='smart'?smartScore(p):avg(p);
+    const clone={...p,score};
+    (byPos[p.position]||byPos.MID).push(clone);
   });
-
   Object.keys(byPos).forEach(k=>byPos[k].sort((a,b)=>b.score-a.score));
 
-  const A=[], B=[];
-  const addBalanced=(arr)=>{
-    arr.forEach((p,i)=>{
-      const sumA=A.reduce((s,x)=>s+x.score,0);
-      const sumB=B.reduce((s,x)=>s+x.score,0);
-      if(i%2===0){
-        (sumA<=sumB ? A : B).push(p);
-      }else{
-        (sumA<=sumB ? B : A).push(p);
-      }
-    });
-  };
+  const tAvg=t=>t.length?t.reduce((s,p)=>s+p.score,0)/t.length:0;
 
-  ['GK','DEF','MID','WNG','FWD'].forEach(pos=>addBalanced(byPos[pos]));
-
-  while(Math.abs(A.length-B.length)>1){
-    if(A.length>B.length) B.push(A.pop());
-    else A.push(B.pop());
+  if(isTriangular){
+    const A=[],B=[],C=[];
+    const addBalanced3=(arr)=>{
+      arr.forEach(p=>{
+        const sA=A.reduce((s,x)=>s+x.score,0);
+        const sB=B.reduce((s,x)=>s+x.score,0);
+        const sC=C.reduce((s,x)=>s+x.score,0);
+        const min=Math.min(sA,sB,sC);
+        if(min===sA) A.push(p); else if(min===sB) B.push(p); else C.push(p);
+      });
+    };
+    ['GK','DEF','MID','WNG','FWD'].forEach(pos=>addBalanced3(byPos[pos]));
+    lT={A,B,C,avgA:tAvg(A),avgB:tAvg(B),avgC:tAvg(C),triangular:true};
+  } else {
+    const A=[],B=[];
+    const addBalanced=(arr)=>{
+      arr.forEach((p,i)=>{
+        const sumA=A.reduce((s,x)=>s+x.score,0);
+        const sumB=B.reduce((s,x)=>s+x.score,0);
+        if(i%2===0){ (sumA<=sumB?A:B).push(p); }
+        else{ (sumA<=sumB?B:A).push(p); }
+      });
+    };
+    ['GK','DEF','MID','WNG','FWD'].forEach(pos=>addBalanced(byPos[pos]));
+    while(Math.abs(A.length-B.length)>1){
+      if(A.length>B.length) B.push(A.pop()); else A.push(B.pop());
+    }
+    lT={A,B};
   }
 
-  lT={A,B};
   renderTeams();
   document.getElementById('teams-res').style.display='block';
   document.getElementById('teams-res').scrollIntoView({behavior:'smooth',block:'start'});
@@ -1415,33 +1420,53 @@ function genTeams(){
 }
 // ── REMIX ──────────────────────────────────────────────────
 function remixTeams(){
-  // Shuffle lT.A and lT.B combined then re-balance
+  const tAvg=t=>t.length?t.reduce((s,p)=>s+p.score,0)/t.length:0;
+  if(lT.triangular){
+    const all=[...lT.A,...lT.B,...lT.C].sort(()=>Math.random()-0.5);
+    const A=[],B=[],C=[];
+    all.forEach(p=>{
+      const sA=A.reduce((s,x)=>s+x.score,0);
+      const sB=B.reduce((s,x)=>s+x.score,0);
+      const sC=C.reduce((s,x)=>s+x.score,0);
+      const min=Math.min(sA,sB,sC);
+      if(min===sA) A.push(p); else if(min===sB) B.push(p); else C.push(p);
+    });
+    lT={A,B,C,avgA:tAvg(A),avgB:tAvg(B),avgC:tAvg(C),triangular:true};
+    renderTeams(); return;
+  }
   const all=[...lT.A,...lT.B].sort(()=>Math.random()-0.5);
   const A=[],B=[];
-  all.forEach((p,i)=>{
+  all.forEach(p=>{
     const sA=A.reduce((s,x)=>s+x.score,0);
     const sB=B.reduce((s,x)=>s+x.score,0);
     (sA<=sB?A:B).push(p);
   });
   while(Math.abs(A.length-B.length)>1){
-    if(A.length>B.length) B.push(A.pop());
-    else A.push(B.pop());
+    if(A.length>B.length) B.push(A.pop()); else A.push(B.pop());
   }
-  lT={A,B};
-  const tAvg=t=>t.length?t.reduce((s,p)=>s+p.score,0)/t.length:0;
-  lT.avgA=tAvg(A); lT.avgB=tAvg(B);
+  lT={A,B,avgA:tAvg(A),avgB:tAvg(B)};
   renderTeams();
 }
 
 // ── MANUAL TEAM EDITING ────────────────────────────────────
 // Move a player from one team to the other
 function movePlayer(playerId, fromTeam){
+  const tAvg=t=>t.length?t.reduce((s,p)=>s+p.score,0)/t.length:0;
+  if(lT.triangular){
+    const cycle={A:'B',B:'C',C:'A'};
+    const toTeam=cycle[fromTeam];
+    const from=lT[fromTeam], to=lT[toTeam];
+    const idx=from.findIndex(p=>p.id===playerId);
+    if(idx===-1) return;
+    to.push(from.splice(idx,1)[0]);
+    lT.avgA=tAvg(lT.A); lT.avgB=tAvg(lT.B); lT.avgC=tAvg(lT.C);
+    renderTeams(); return;
+  }
   const from=fromTeam==='A'?lT.A:lT.B;
-  const to  =fromTeam==='A'?lT.B:lT.A;
+  const to=fromTeam==='A'?lT.B:lT.A;
   const idx=from.findIndex(p=>p.id===playerId);
   if(idx===-1) return;
   to.push(from.splice(idx,1)[0]);
-  const tAvg=t=>t.length?t.reduce((s,p)=>s+p.score,0)/t.length:0;
   lT.avgA=tAvg(lT.A); lT.avgB=tAvg(lT.B);
   renderTeams();
 }
@@ -1483,16 +1508,45 @@ function makeFormationRows(team){
 }
 
 function renderTeams(){
-  const {A,B}=lT;
+  const {A,B,C}=lT;
   const tAvg=t=>t.length?t.reduce((s,p)=>s+p.score,0)/t.length:0;
-  const aA=tAvg(A),bA=tAvg(B),tot=aA+bA;
-  document.getElementById('bal-fill').style.width=(tot>0?(aA/tot)*100:50)+'%';
-  document.getElementById('sc-a').textContent=aA.toFixed(1);
-  document.getElementById('sc-b').textContent=bA.toFixed(1);
+  const aA=tAvg(A),bA=tAvg(B),cA=C?tAvg(C):0;
+  const balBox=document.getElementById('bal-box');
+
+  if(lT.triangular){
+    balBox.innerHTML=`
+      <div style="display:flex;justify-content:space-around;align-items:flex-end;padding:4px 0 2px">
+        <div style="text-align:center">
+          <div class="bsv" style="color:var(--green)">${aA.toFixed(1)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">⚽ Equipo A</div>
+        </div>
+        <div style="text-align:center">
+          <div class="bsv" style="color:var(--blue)">${bA.toFixed(1)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">⚽ Equipo B</div>
+        </div>
+        <div style="text-align:center">
+          <div class="bsv" style="color:var(--orange)">${cA.toFixed(1)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">⚽ Equipo C</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);align-self:flex-end;padding-bottom:4px">PROMEDIO</div>
+      </div>`;
+  } else {
+    const tot=aA+bA;
+    balBox.innerHTML=`
+      <div class="bt"><span>⚽ Equipo A</span><span>⚽ Equipo B</span></div>
+      <div class="btr"><div class="ba" style="width:${tot>0?(aA/tot)*100:50}%;transition:width .8s cubic-bezier(.4,0,.2,1)"></div></div>
+      <div class="bsc">
+        <div class="bsv" style="color:var(--green)">${aA.toFixed(1)}</div>
+        <div style="font-size:11px;color:var(--muted);align-self:flex-end;padding-bottom:4px">PROMEDIO</div>
+        <div class="bsv" style="color:var(--blue)">${bA.toFixed(1)}</div>
+      </div>`;
+  }
+  lT.avgA=aA; lT.avgB=bA; if(lT.triangular) lT.avgC=cA;
 
   const playerDot=(p,teamKey)=>{
     const score=Math.round(ov(p));
-    const toTeam=teamKey==='A'?'B':'A';
+    const cycle={A:'B',B:'C',C:'A'};
+    const toTeam=lT.triangular?cycle[teamKey]:(teamKey==='A'?'B':'A');
     const firstName=p.name.split(' ')[0].toUpperCase();
     return`<div onclick="movePlayer('${p.id}','${teamKey}')"
       title="${p.name} · Toca para mover al equipo ${toTeam}"
@@ -1545,15 +1599,14 @@ function renderTeams(){
 
   document.getElementById('tw').innerHTML=
     fieldBlock(A,'⚽ Equipo A','var(--green)','A')+
-    fieldBlock(B,'⚽ Equipo B','var(--blue)','B');
-
-  lT.avgA=aA; lT.avgB=bA;
+    fieldBlock(B,'⚽ Equipo B','var(--blue)','B')+
+    (lT.triangular?fieldBlock(C,'⚽ Equipo C','var(--orange)','C'):'');
 }
 
 function renderLogear(){
   const view=document.getElementById('logear-view');
   if(!view) return;
-  const {A,B}=lT;
+  const {A,B,C}=lT;
   if(!A?.length && !B?.length){
     view.innerHTML=`
       <div style="text-align:center;padding:48px 20px;color:var(--muted)">
@@ -1563,6 +1616,7 @@ function renderLogear(){
       </div>`;
     return;
   }
+  if(lT.triangular){ renderLogearTriangular(); return; }
   const everyone=[...A,...B];
   const golesVisible=document.getElementById('goles-panel-l')?.style.display==='block';
   const prevMvp=document.getElementById('mvp-select-l')?.value||'';
@@ -1766,6 +1820,95 @@ function saveMatchL(){
   renderProfiles();
   renderHistory();
   snack('🏆 Partido guardado');
+}
+
+// ── TRIANGULAR ─────────────────────────────────────────────
+function renderLogearTriangular(){
+  const view=document.getElementById('logear-view');
+  const {A,B,C}=lT;
+  const teamLine=(t,label,col)=>`
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:700;color:${col};min-width:76px">${label}</span>
+      ${t.map(p=>`<span style="font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 7px">${p.name.split(' ')[0]}</span>`).join('')}
+    </div>`;
+  const matchCard=(idSuf,tA,tB,labelA,labelB,colA,colB)=>{
+    const opts=(t)=>t.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    const everyone=[...tA,...tB];
+    return`<div class="card" style="border:1px solid rgba(0,229,255,.13);margin-bottom:10px;padding:14px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:10px">
+        <span style="color:${colA}">${labelA}</span>
+        <span style="margin:0 8px;color:var(--muted)">vs</span>
+        <span style="color:${colB}">${labelB}</span>
+      </div>
+      <div class="grid-2" style="margin-bottom:8px">
+        <div><label>Goles ${labelA}</label><input type="number" id="sc-${idSuf}-a" min="0" value="0"></div>
+        <div><label>Goles ${labelB}</label><input type="number" id="sc-${idSuf}-b" min="0" value="0"></div>
+      </div>
+      <div class="grid-2">
+        <div><label>⭐ MVP</label>
+          <select id="mvp-${idSuf}">${opts(everyone)}</select>
+        </div>
+        <div><label>🧤 Arquero</label>
+          <select id="gk-${idSuf}"><option value="">— Ninguno —</option>${opts(everyone)}</select>
+        </div>
+      </div>
+    </div>`;
+  };
+  view.innerHTML=`
+    <div class="card" style="border:1px solid rgba(0,229,255,.18);margin-bottom:10px;padding:14px">
+      <div class="sec-title" style="margin-bottom:10px">🔺 Triangular — Equipos</div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        ${teamLine(A,'⚽ Equipo A','var(--green)')}
+        ${teamLine(B,'⚽ Equipo B','var(--blue)')}
+        ${teamLine(C,'⚽ Equipo C','var(--orange)')}
+      </div>
+    </div>
+    <div class="sec-title" style="margin-bottom:8px">📋 Resultados</div>
+    ${matchCard('ab',A,B,'Equipo A','Equipo B','var(--green)','var(--blue)')}
+    ${matchCard('bc',B,C,'Equipo B','Equipo C','var(--blue)','var(--orange)')}
+    ${matchCard('ac',A,C,'Equipo A','Equipo C','var(--green)','var(--orange)')}
+    <button class="btn btn-ac btn-full" style="margin-top:6px" onclick="saveMatchTriangular()">💾 Guardar triangular</button>`;
+}
+
+function saveMatchTriangular(){
+  if(!isAdmin()){ snack('🔒 Necesitas acceso admin'); return; }
+  const {A,B,C,avgA,avgB,avgC}=lT;
+  const format='Triangular';
+  const now=Date.now();
+
+  const buildMatch=(tA,tB,aA,aB,idSuf)=>{
+    const sA=parseInt(document.getElementById(`sc-${idSuf}-a`)?.value||0);
+    const sB=parseInt(document.getElementById(`sc-${idSuf}-b`)?.value||0);
+    const mvp=document.getElementById(`mvp-${idSuf}`)?.value||'';
+    const gk=document.getElementById(`gk-${idSuf}`)?.value||'';
+    return{
+      id:uid(), date:now, format,
+      avgA:+aA.toFixed(2), avgB:+aB.toFixed(2),
+      scoreA:sA, scoreB:sB,
+      winner:sA===sB?'D':(sA>sB?'A':'B'),
+      mvp, goalkeeper:gk,
+      goles:{}, asistencias:{},
+      teamA:tA.map(p=>({id:p.id,name:p.name,position:p.position,score:+p.score.toFixed(2)})),
+      teamB:tB.map(p=>({id:p.id,name:p.name,position:p.position,score:+p.score.toFixed(2)})),
+    };
+  };
+
+  const matches=[
+    buildMatch(A,B,avgA,avgB,'ab'),
+    buildMatch(B,C,avgB,avgC,'bc'),
+    buildMatch(A,C,avgA,avgC,'ac'),
+  ];
+
+  matches.forEach(m=>{
+    db.matches.unshift(m);
+    aplicarEvolucionStats(m);
+  });
+  recalcAllStats();
+  save();
+  renderList();
+  renderProfiles();
+  renderHistory();
+  snack('🏆 Triangular guardado (3 partidos)');
 }
 
 function saveMatch(){
