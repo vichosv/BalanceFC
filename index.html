@@ -2358,7 +2358,7 @@ function renderHistory(){
 }
 
 function shareWA(){
-  const {A,B,avgA,avgB}=lT;
+  const {A,B,C,avgA,avgB,avgC}=lT;
   if(!A.length&&!B.length){snack('⚠️ Primero genera los equipos');return;}
   const format=document.getElementById('match-format').value;
   let msg=`*BALANCEDFC — PARTIDO DE HOY*\n-----------------------------\n`;
@@ -2372,9 +2372,18 @@ function shareWA(){
   B.forEach(p=>{ const pos=posObj(p.position); msg+=`  ${pos.emoji} ${p.name} ${playerForm(p.id)}\n`; });
   msg+=`_Promedio: ${avgB.toFixed(1)}_\n\n`;
 
+  if(lT.triangular && C?.length){
+    msg+=`*⚽ EQUIPO C*\n`;
+    C.forEach(p=>{ const pos=posObj(p.position); msg+=`  ${pos.emoji} ${p.name} ${playerForm(p.id)}\n`; });
+    msg+=`_Promedio: ${avgC.toFixed(1)}_\n\n`;
+  }
+
   msg+=`-----------------------------\n`;
-  msg+=`👥 ${A.length+B.length} jugadores\n`;
-  msg+=`📊 ${avgA.toFixed(1)} vs ${avgB.toFixed(1)}\n`;
+  const total=A.length+B.length+(lT.triangular&&C?C.length:0);
+  msg+=`👥 ${total} jugadores\n`;
+  msg+=lT.triangular
+    ?`📊 ${avgA.toFixed(1)} · ${avgB.toFixed(1)} · ${avgC.toFixed(1)}\n`
+    :`📊 ${avgA.toFixed(1)} vs ${avgB.toFixed(1)}\n`;
   msg+=`_BalancedFC · FUT de barrio_`;
 
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
